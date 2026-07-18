@@ -1,0 +1,60 @@
+.ticker-container {
+  width: 100%;
+  background-color: #111827; /* Ekdam dark professional black */
+  color: #f3f4f6;
+  padding: 10px 0;
+  overflow: hidden;
+  white-space: nowrap;
+  display: flex;
+  box-sizing: border-box;
+}
+
+.ticker-track {
+  display: flex;
+  /* 35s speed chhe, tane fast joiye to 25s kari nakhje */
+  animation: marquee 35s linear infinite; 
+}
+
+/* Jyare mouse patti par jay tyare patti ubhi rahi jay (Mast UX) */
+.ticker-container:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+.ticker-item {
+  margin-right: 45px;
+  font-weight: 600;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.symbol {
+  color: #e5e7eb;
+}
+
+.price {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* Realistic Up/Down Colors */
+.text-up {
+  color: #22c55e; /* Professional Green */
+}
+
+.text-down {
+  color: #ef4444; /* Professional Red */
+}
+
+/* Seamless Loop Animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    /* 50% etla mate karan ke aapne content double karyo chhe */
+    transform: translateX(-50%); 
+  }
+}
