@@ -25,7 +25,7 @@ function Navbar({ category, setCategory, language, setLanguage, darkMode, setDar
       <Container fluid> 
         
         <BootstrapNavbar.Brand style={{ fontWeight: "bold", fontSize: "20px" }}>
-          <FaNewspaper className="me-2" />News-pulse23
+          <FaNewspaper className="me-2" />News-pulse234
         </BootstrapNavbar.Brand>
 
         <BootstrapNavbar.Toggle />
