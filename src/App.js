@@ -21,13 +21,22 @@ function App() {
     const fetchNews = async () => {
       setIsLoading(true);
       setErrorMsg("");
-      try {
-        // Have direct GNews nahi, pan aapana Vercel backend proxy ne call karshu
-        let url = `/api/news?category=${category}&lang=${language}`;
-        
-        // Jo user search kare, to query parameter badli nakhiye
-        if (search) {
-          url = `/api/news?search=${encodeURIComponent(search)}&lang=${language}`;
+  try {
+        let url = "";
+
+        // Jo "localhost" (Tamara PC) par run thatu hoy:
+        if (window.location.hostname === "localhost") {
+          url = `https://gnews.io/api/v4/top-headlines?category=${category}&lang=${language}&country=in&max=10&apikey=b890dfdbc88d6283fbd54075e88eccaa`;
+          if (search) {
+            url = `https://gnews.io/api/v4/search?q=${search}&lang=${language}&country=in&max=10&apikey=b890dfdbc88d6283fbd54075e88eccaa`;
+          }
+        } 
+        // Jo Vercel (Live Website) par run thatu hoy:
+        else {
+          url = `/api/news?category=${category}&lang=${language}`;
+          if (search) {
+            url = `/api/news?search=${encodeURIComponent(search)}&lang=${language}`;
+          }
         }
 
         const response = await fetch(url);
