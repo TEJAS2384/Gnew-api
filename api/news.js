@@ -1,3 +1,4 @@
+// forced update to fix apigit status
 export default async function handler(req, res) {
   // Tamari API Key ahiya secure thay gayi
   const API_KEY = process.env.REACT_APP_NEWS_API_KEY || 'b890dfdbc88d6283fbd54075e88eccaa';
