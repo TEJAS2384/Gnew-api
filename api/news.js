@@ -1,4 +1,3 @@
-// forced update to fix apigit status
 export default async function handler(req, res) {
   // Tamari API Key ahiya secure thay gayi
   const API_KEY = process.env.REACT_APP_NEWS_API_KEY || 'b890dfdbc88d6283fbd54075e88eccaa';
@@ -7,7 +6,7 @@ export default async function handler(req, res) {
   const language = req.query.lang || 'en';
   const search = req.query.search || '';
 
-  // AHIYA SUDHARO KARYO CHHE: ${API_KEY} vaparyu chhe
+  // AHIYA CRASH THATU HATU: Me ${API_KEY} vaparyu chhe, direct number nahi
   let url = `https://gnews.io/api/v4/top-headlines?category=${category}&lang=${language}&country=in&max=10&apikey=${b890dfdbc88d6283fbd54075e88eccaa}`;
 
   if (search) {
