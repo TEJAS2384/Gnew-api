@@ -37,7 +37,6 @@
   }
 }
 
-
 .hero-card{
   border-radius:20px;
   overflow:hidden;
@@ -89,4 +88,73 @@
 .news-description{
     color:#666;
     min-height:75px;
+}
+
+/* --- અહીથી નીચેનું મેં ખાલી ડાર્ક મોડ નો ઈશ્યુ સોલ્વ કરવા એડ કર્યું છે --- */
+
+/* જો તમારી એપમાં બટનથી ડાર્ક મોડ થતો હોય તો આ લાગુ પડશે */
+[data-bs-theme="dark"] .news-card,
+[data-theme="dark"] .news-card,
+.dark .news-card,
+.dark-mode .news-card {
+    background: #1f2937 !important; /* ડાર્ક ગ્રે બેકગ્રાઉન્ડ */
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .news-description,
+[data-theme="dark"] .news-description,
+.dark .news-description,
+.dark-mode .news-description {
+    color: #d1d5db !important; /* અક્ષરો વાંચી શકાય તેવો આછો કલર */
+}
+
+
+[data-bs-theme="dark"] .news-card,
+[data-theme="dark"] .news-card,
+.dark .news-card,
+.dark-mode .news-card {
+    background: #1f2937 !important; 
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .news-description,
+[data-theme="dark"] .news-description,
+.dark .news-description,
+.dark-mode .news-description {
+    color: #d1d5db !important; 
+}
+
+/* ડાર્ક મોડમાં Read બટન / લિંક સ્પષ્ટ દેખાડવા માટે */
+[data-bs-theme="dark"] .news-card a,
+[data-theme="dark"] .news-card a,
+.dark .news-card a,
+.dark-mode .news-card a,
+[data-bs-theme="dark"] .news-card button,
+[data-theme="dark"] .news-card button,
+.dark .news-card button,
+.dark-mode .news-card button {
+    color: #61dafb !important; /* આછો વાદળી કલર (React નો ડિફોલ્ટ કલર) */
+    font-weight: 600 !important; /* અક્ષરો થોડા જાડા કરવા */
+    text-decoration: none;
+}
+
+
+/* લાઈટ મોડ (સામાન્ય) માં Read બટન સ્પષ્ટ દેખાડવા માટે */
+.news-card a,
+.news-card button {
+    color: #007bff; /* સફેદ બેકગ્રાઉન્ડ પર મસ્ત દેખાય એવો પ્રોફેશનલ વાદળી કલર */
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.news-card a:hover,
+.news-card button:hover {
+    color: #0056b3; /* માઉસ લઈ જવા પર કલર થોડો વધારે ઘાટો થશે */
+}
+/* જો હોવર (Hover) કરવા પર કલર બદલવો હોય તો */
+[data-bs-theme="dark"] .news-card a:hover,
+[data-theme="dark"] .news-card a:hover,
+.dark .news-card a:hover,
+.dark-mode .news-card a:hover {
+    color: #ffffff !important; /* માઉસ લઈ જવા પર સફેદ થશે */
 }
