@@ -6,11 +6,11 @@ export default async function handler(req, res) {
   const language = req.query.lang || 'en';
   const search = req.query.search || '';
 
-  // Jo search value hoy to search endpoint hit thase, nai to top-headlines
-  let url = "https://gnews.io/api/v4/top-headlines?category=${category}&lang=${language}&country=in&max=10&apikey=${b890dfdbc88d6283fbd54075e88eccaa}";
+  // AHIYA SUDHARO KARYO CHHE: ${API_KEY} vaparyu chhe
+  let url = `https://gnews.io/api/v4/top-headlines?category=${category}&lang=${language}&country=in&max=10&apikey=${b890dfdbc88d6283fbd54075e88eccaa}`;
 
   if (search) {
-    url = "https://gnews.io/api/v4/search?q=${search}&lang=${language}&country=in&max=10&apikey=${b890dfdbc88d6283fbd54075e88eccaa}";
+    url = `https://gnews.io/api/v4/search?q=${search}&lang=${language}&country=in&max=10&apikey=${b890dfdbc88d6283fbd54075e88eccaa}`;
   }
 
   try {
