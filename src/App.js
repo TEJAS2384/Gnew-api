@@ -12,6 +12,34 @@ import SubmitNews from './components/SubmitNews';
 import AdminPanel from './components/AdminPanel';
 import SavedNews from './components/SavedNews';
 
+// Backup Mock News (Agar API Limit Puru thai jaay to site khali na lage)
+const fallbackNews = [
+  {
+    title: "India Advances Big in AI & Space Technology Innovations",
+    description: "Indian tech startups and research institutes achieve major breakthroughs in artificial intelligence and space exploration projects this year.",
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop",
+    url: "https://google.com"
+  },
+  {
+    title: "Global Stock Markets Show Positive Growth in Q3",
+    description: "Financial markets across major economies see steady upward trend driven by tech stocks and strong quarterly corporate earnings.",
+    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=600&auto=format&fit=crop",
+    url: "https://google.com"
+  },
+  {
+    title: "Major Breakthrough in Renewable Solar Energy Storage",
+    description: "Engineers develop high-efficiency batteries that dramatically increase the storage capacity for solar and wind energy grids.",
+    image: "https://images.unsplash.com/photo-1509391365360-2e959784a276?q=80&w=600&auto=format&fit=crop",
+    url: "https://google.com"
+  },
+  {
+    title: "National Sports Championship Highlights Emerging Young Talent",
+    description: "Young athletes set unprecedented national records in track and field events during the annual national championship series.",
+    image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=600&auto=format&fit=crop",
+    url: "https://google.com"
+  }
+];
+
 function NewsFeed({ language, search, setSearch }) {
   const { categoryName } = useParams();
   const currentCategory = categoryName || "general";
@@ -22,36 +50,48 @@ function NewsFeed({ language, search, setSearch }) {
   useEffect(() => {
     const fetchNews = async () => {
       setIsLoading(true);
-      try {
-        // 1. Live Express Backend Server mathi approved news fetch kar
-        let approvedUserNews = [];
+      let userApprovedNews = [];
+
+      // 1. Fetch Local User Approved News (Khali Localhost/Development ma j request jase)
+      if (window.location.hostname === "localhost") {
         try {
           const userNewsRes = await fetch('http://localhost:5000/api/user-news');
           if (userNewsRes.ok) {
-            approvedUserNews = await userNewsRes.json();
+            userApprovedNews = await userNewsRes.json();
           }
         } catch (e) {
-          console.log("Server fetch fallback");
+          console.log("Backend offline or local fetch skipped");
+        }
+      }
+
+      // 2. Fetch External API News
+      try {
+        let url = `https://gnews.io/api/v4/top-headlines?category=${currentCategory}&lang=${language}&country=in&max=10&apikey=b890dfdbc88d6283fbd54075e88eccaa`;
+        
+        if (search) {
+          url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(search)}&lang=${language}&country=in&max=10&apikey=b890dfdbc88d6283fbd54075e88eccaa`;
         }
 
-        // 2. External GNews API Fetch
-        const url = `https://gnews.io/api/v4/top-headlines?category=${currentCategory}&lang=${language}&country=in&max=10&apikey=b890dfdbc88d6283fbd54075e88eccaa`;
         const response = await fetch(url);
         const data = await response.json();
         
-        if (data.articles) {
-          const filteredUserNews = approvedUserNews.filter(n => n.category === currentCategory || currentCategory === 'general');
+        if (data && data.articles && data.articles.length > 0) {
+          const filteredUserNews = userApprovedNews.filter(n => n.category === currentCategory || currentCategory === 'general');
           setNews([...filteredUserNews, ...data.articles]);
+        } else {
+          // If API Limit Reached, Use Fallback
+          setNews([...userApprovedNews, ...fallbackNews]);
         }
       } catch (error) {
-        console.error(error);
+        console.error("API Fetch Error:", error);
+        setNews([...userApprovedNews, ...fallbackNews]);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchNews();
-  }, [currentCategory, language]);
+  }, [currentCategory, language, search]);
 
   return (
     <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px' }}>
@@ -59,7 +99,7 @@ function NewsFeed({ language, search, setSearch }) {
       
       {isLoading ? (
         <div className="text-center mt-5">
-          <h4>Loading News...</h4>
+          <h4>Loading Latest News...</h4>
         </div>
       ) : (
         <>
