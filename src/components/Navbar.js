@@ -1,72 +1,81 @@
+import React from "react";
 import Container from "react-bootstrap/Container";
 import BootstrapNavbar from "react-bootstrap/Navbar";
 import Nav from "react-bootstrap/Nav";
 import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button"; // <-- Button import karyu
-import { FaNewspaper } from "react-icons/fa";
+import Button from "react-bootstrap/Button";
+import { FaNewspaper, FaPlusCircle, FaUserShield, FaBookmark } from "react-icons/fa";
+import { Link, NavLink } from "react-router-dom";
 
-function Navbar({ category, setCategory, language, setLanguage, darkMode, setDarkMode }) {
-  
-  const activeStyle = (currentCategory) => {
-    return category === currentCategory
-      ? { 
-          fontWeight: "bold", 
-          color: "#3b82f6", 
-          borderBottom: "2px solid #3b82f6", 
-          paddingBottom: "5px" 
-        }
-      : { 
-          color: "rgba(255, 255, 255, 0.6)" 
-        };
-  };
+function Navbar({ language, setLanguage, darkMode, setDarkMode }) {
+  const categories = ["general", "world", "business", "technology", "sports", "health", "science"];
 
   return (
-    <BootstrapNavbar expand="lg" bg="dark" variant="dark" sticky="top" className="shadow px-3">
-      <Container fluid> 
+    <BootstrapNavbar bg="dark" variant="dark" sticky="top" className="shadow px-2 py-2 w-100">
+      <Container fluid className="d-flex align-items-center justify-content-between p-0"> 
         
-        <BootstrapNavbar.Brand style={{ fontWeight: "bold", fontSize: "20px" }}>
-          <FaNewspaper className="me-2" />G-News
+        {/* Logo - Click karvathi Home par jase */}
+        <BootstrapNavbar.Brand as={Link} to="/" className="fw-bold fs-5 d-flex align-items-center ms-2 me-3 text-white">
+          <FaNewspaper className="me-2 text-primary" />G-News
         </BootstrapNavbar.Brand>
 
-        <BootstrapNavbar.Toggle />
+        {/* Categories Strip */}
+        <div 
+          className="d-flex align-items-center overflow-auto flex-grow-1 me-2" 
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none", whiteSpace: "nowrap" }}
+        >
+          <Nav className="d-flex flex-row align-items-center" style={{ gap: "14px" }}> 
+            {categories.map((cat) => (
+              <Nav.Link 
+                key={cat} 
+                as={NavLink} 
+                to={`/category/${cat}`}
+                className={({ isActive }) => (isActive ? "fw-bold text-primary border-bottom border-primary pb-1" : "text-white-50")}
+                style={{ textTransform: "capitalize", fontSize: "0.95rem" }}
+              >
+                {cat}
+              </Nav.Link>
+            ))}
 
-        <BootstrapNavbar.Collapse>
-          <Nav className="me-auto ms-lg-4" style={{ gap: "10px" }}> 
-            <Nav.Link onClick={() => setCategory("general")} style={activeStyle("general")}>General</Nav.Link>
-            <Nav.Link onClick={() => setCategory("world")} style={activeStyle("world")}>World</Nav.Link>
-            <Nav.Link onClick={() => setCategory("business")} style={activeStyle("business")}>Business</Nav.Link>
-            <Nav.Link onClick={() => setCategory("technology")} style={activeStyle("technology")}>Technology</Nav.Link>
-            <Nav.Link onClick={() => setCategory("sports")} style={activeStyle("sports")}>Sports</Nav.Link>
-            <Nav.Link onClick={() => setCategory("health")} style={activeStyle("health")}>Health</Nav.Link>
-            <Nav.Link onClick={() => setCategory("science")} style={activeStyle("science")}>Science</Nav.Link>
+            <Nav.Link as={NavLink} to="/saved" className={({ isActive }) => (isActive ? "fw-bold text-warning" : "text-warning opacity-75")}>
+              <FaBookmark className="me-1" /> Saved
+            </Nav.Link>
+
+            <Nav.Link as={NavLink} to="/submit-news" className={({ isActive }) => (isActive ? "fw-bold text-success" : "text-success opacity-75")}>
+              <FaPlusCircle className="me-1" /> Submit
+            </Nav.Link>
+
+            <Nav.Link as={NavLink} to="/admin" className={({ isActive }) => (isActive ? "fw-bold text-info" : "text-info opacity-75")}>
+              <FaUserShield className="me-1" /> Admin
+            </Nav.Link>
           </Nav>
+        </div>
 
-          {/* Ahiya Language Selection ane Dark Mode Toggle banne ne sathe mukiya chhe */}
-          <div className="d-flex align-items-center mt-3 mt-lg-0">
-            <Form.Select
-              style={{ width: "150px", cursor: "pointer", fontWeight: "500" }}
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-            >
-              <option value="en">English</option>
-              <option value="hi">Hindi</option>
-              <option value="gu">Gujarati</option>
-              <option value="mr">Marathi</option>
-            </Form.Select>
+        {/* Language & Dark Mode */}
+        <div className="d-flex align-items-center gap-2 me-2" style={{ flexShrink: 0 }}>
+          <Form.Select
+            size="sm"
+            style={{ width: "100px", cursor: "pointer", fontWeight: "500", fontSize: "13px" }}
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+          >
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="gu">Gujarati</option>
+            <option value="mr">Marathi</option>
+          </Form.Select>
 
-            {/* Dark/Light Mode no Emoji Button */}
-            <Button
-              variant={darkMode ? "outline-light" : "outline-warning"}
-              onClick={() => setDarkMode(!darkMode)}
-              className="ms-3 rounded-circle d-flex align-items-center justify-content-center"
-              style={{ width: "42px", height: "42px", fontSize: "20px", border: "none" }}
-              title="Toggle Dark/Light Mode"
-            >
-              {darkMode ? '☀️' : '🌙'}
-            </Button>
-          </div>
+          <Button
+            variant={darkMode ? "outline-light" : "outline-warning"}
+            onClick={() => setDarkMode(!darkMode)}
+            className="rounded-circle d-flex align-items-center justify-content-center p-0"
+            style={{ width: "35px", height: "35px", fontSize: "15px", border: "none" }}
+            title="Toggle Dark/Light Mode"
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </Button>
+        </div>
 
-        </BootstrapNavbar.Collapse>
       </Container>
     </BootstrapNavbar>
   );
