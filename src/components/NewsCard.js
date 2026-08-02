@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Modal, Badge } from 'react-bootstrap';
-import { FaVolumeUp, FaVolumeMute, FaBookmark, FaRegBookmark, FaShareAlt, FaBolt, FaShieldAlt } from 'react-icons/fa';
+import { FaVolumeUp, FaVolumeMute, FaBookmark, FaRegBookmark, FaShareAlt, FaShieldAlt } from 'react-icons/fa';
 
 function NewsCard({ article, language = 'en' }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -15,7 +15,7 @@ function NewsCard({ article, language = 'en' }) {
     `Impact: Highly relevant news for ${article.category || 'general'} readers with verified sources.`
   ];
 
-  // Random/Calculated Credibility Score (92% - 98%)
+  // Calculated Credibility Score (92% - 98%)
   const credibilityScore = Math.floor(Math.random() * 7) + 92;
 
   useEffect(() => {
@@ -86,7 +86,7 @@ function NewsCard({ article, language = 'en' }) {
   return (
     <>
       <Card className="h-100 shadow-sm border-0 rounded-3 overflow-hidden position-relative">
-        {/* 🛡️ Feature 2: Credibility Badge */}
+        {/* 🛡️ Source Credibility Badge */}
         <div className="position-absolute top-0 end-0 m-2">
           <Badge bg="success" className="d-flex align-items-center gap-1 shadow-sm px-2 py-1">
             <FaShieldAlt /> {credibilityScore}% Verified
@@ -110,14 +110,14 @@ function NewsCard({ article, language = 'en' }) {
             {article.description?.substring(0, 100)}...
           </Card.Text>
 
-          {/* ⚡ Feature 1: AI Summary Button */}
+          {/* ⚡ Quick AI Summary Button (Solid Yellow + Crisp Black Text) */}
           <Button 
-            variant="outline-warning" 
+            variant="warning" 
             size="sm" 
-            className="w-100 mb-2 fw-bold text-dark d-flex align-items-center justify-content-center gap-1"
+            className="w-100 mb-2 fw-bold text-dark d-flex align-items-center justify-content-center gap-1 shadow-sm"
             onClick={() => setShowSummary(true)}
           >
-            <FaBolt className="text-warning" />⚡ Quick AI Summary
+            ⚡ Quick AI Summary
           </Button>
 
           <div className="d-flex justify-content-between align-items-center pt-2 border-top">
@@ -147,9 +147,9 @@ function NewsCard({ article, language = 'en' }) {
 
       {/* ⚡ AI Summary Modal */}
       <Modal show={showSummary} onHide={() => setShowSummary(false)} centered>
-        <Modal.Header closeButton className="bg-light">
-          <Modal.Title className="fs-6 fw-bold text-primary d-flex align-items-center gap-2">
-            <FaBolt className="text-warning" /> ⚡ 3-Bullet AI Summary
+        <Modal.Header closeButton>
+          <Modal.Title className="fs-6 fw-bold text-warning d-flex align-items-center gap-2">
+            ⚡ 3-Bullet AI Summary
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="p-4">
