@@ -1,13 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Card, Button, Badge, Row, Col, Alert, Tabs, Tab } from 'react-bootstrap';
-import { FaCheck, FaTimes, FaTrashAlt } from 'react-icons/fa';
+import { Container, Card, Button, Badge, Row, Col, Alert, Tabs, Tab, Form, InputGroup } from 'react-bootstrap';
+import { FaCheck, FaTimes, FaTrashAlt, FaLock, FaUserShield } from 'react-icons/fa';
 
 function AdminPanel() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [loginError, setLoginError] = useState('');
+
   const [pendingList, setPendingList] = useState([]);
   const [approvedList, setApprovedList] = useState([]);
   const [msg, setMsg] = useState('');
 
-  // Fetch Pending & Approved News from Backend
+  // Default Admin Password
+  const ADMIN_PASSWORD = "admin123";
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (passwordInput === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      setLoginError('');
+      fetchData();
+    } else {
+      setLoginError('❌ Incorrect Admin Password! Access Denied.');
+    }
+  };
+
   const fetchData = async () => {
     try {
       const resPending = await fetch('http://localhost:5000/api/pending-news');
@@ -23,10 +40,11 @@ function AdminPanel() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isAuthenticated]);
 
-  // Approve Pending Request
   const handleApprove = async (id) => {
     try {
       const res = await fetch(`http://localhost:5000/api/approve-news/${id}`, { method: 'POST' });
@@ -39,7 +57,6 @@ function AdminPanel() {
     }
   };
 
-  // Reject Pending Request
   const handleReject = async (id) => {
     try {
       const res = await fetch(`http://localhost:5000/api/reject-news/${id}`, { method: 'DELETE' });
@@ -52,12 +69,11 @@ function AdminPanel() {
     }
   };
 
-  // 🗑️ Delete Approved Live News
   const handleDeleteLive = async (id) => {
     try {
       const res = await fetch(`http://localhost:5000/api/delete-news/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        setMsg("Approved news permanently deleted from Live Feed!");
+        setMsg("Approved news permanently deleted!");
         fetchData();
       }
     } catch (e) {
@@ -65,14 +81,56 @@ function AdminPanel() {
     }
   };
 
+  // 🔒 Render Admin Login Screen if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <Container className="my-5 d-flex justify-content-center">
+        <Card className="shadow-lg border-0 p-4 rounded-4" style={{ maxWidth: '420px', width: '100%' }}>
+          <div className="text-center mb-3">
+            <FaUserShield size={50} className="text-primary mb-2" />
+            <h3 className="fw-bold">Admin Portal</h3>
+            <p className="text-muted small">Enter administrator key to access control panel.</p>
+          </div>
+
+          {loginError && <Alert variant="danger" className="py-2 fs-6">{loginError}</Alert>}
+
+          <Form onSubmit={handleLogin}>
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-bold">Admin Password</Form.Label>
+              <InputGroup>
+                <InputGroup.Text><FaLock /></InputGroup.Text>
+                <Form.Control 
+                  type="password" 
+                  placeholder="Enter password" 
+                  required
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                />
+              </InputGroup>
+            </Form.Group>
+
+            <Button variant="primary" type="submit" className="w-100 py-2 fw-bold">
+              Unlock Dashboard
+            </Button>
+          </Form>
+        </Card>
+      </Container>
+    );
+  }
+
+  // 🛡️ Render Dashboard when authenticated
   return (
     <Container className="my-5">
-      <h2 className="fw-bold mb-4">🛡️ Admin Dashboard</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="fw-bold">🛡️ Admin Control Panel</h2>
+        <Button variant="outline-secondary" size="sm" onClick={() => setIsAuthenticated(false)}>
+          🔒 Lock Dashboard
+        </Button>
+      </div>
 
       {msg && <Alert variant="info" onClose={() => setMsg('')} dismissible>{msg}</Alert>}
 
       <Tabs defaultActiveKey="pending" className="mb-4">
-        {/* Pending Approval Tab */}
         <Tab eventKey="pending" title={`Pending Requests (${pendingList.length})`}>
           {pendingList.length === 0 ? (
             <Card className="text-center p-5 border-0 shadow-sm">
@@ -108,7 +166,6 @@ function AdminPanel() {
           )}
         </Tab>
 
-        {/* Live Approved News Tab (For Deletion) */}
         <Tab eventKey="approved" title={`Live Published News (${approvedList.length})`}>
           {approvedList.length === 0 ? (
             <Card className="text-center p-5 border-0 shadow-sm">
