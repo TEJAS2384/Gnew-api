@@ -3,7 +3,7 @@ import { Button, Card, Form, InputGroup, Badge } from 'react-bootstrap';
 import { FaRobot, FaPaperPlane, FaTimes, FaMagic, FaUser } from 'react-icons/fa';
 
 // 🔑 Your Real Gemini API Key
-const GEMINI_API_KEY = "AQ.Ab8RN6LPV9ktWwSxCOWfkwozd11C7UShDgXeD3zF0DKQjj7BkQ";
+const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || "";
 
 // Helper component to format **bold** text and line breaks
 const FormattedMessage = ({ text }) => {
