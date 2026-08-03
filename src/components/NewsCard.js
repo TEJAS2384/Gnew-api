@@ -2,12 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, Modal, Badge } from 'react-bootstrap';
 import { FaVolumeUp, FaVolumeMute, FaBookmark, FaRegBookmark, FaShareAlt, FaShieldAlt } from 'react-icons/fa';
 
+<<<<<<< HEAD
 function NewsCard({ article, language = 'en' }) {
+=======
+function NewsCard({ article, language = 'en', onSaveToggle }) {
+>>>>>>> 3cc854b (Initial clean release)
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [voices, setVoices] = useState([]);
 
+<<<<<<< HEAD
+=======
+  // Check if this article is already saved in localStorage
+  useEffect(() => {
+    const existing = JSON.parse(localStorage.getItem('savedNews') || '[]');
+    const found = existing.some(item => item.title === article.title);
+    setIsSaved(found);
+  }, [article.title]);
+
+>>>>>>> 3cc854b (Initial clean release)
   // Generate 3-Bullet Points for Summary
   const bullets = [
     `Key Focus: ${article.title}`,
@@ -62,6 +76,7 @@ function NewsCard({ article, language = 'en' }) {
 
   const handleSave = () => {
     const existing = JSON.parse(localStorage.getItem('savedNews') || '[]');
+<<<<<<< HEAD
     if (isSaved) {
       const filtered = existing.filter(item => item.title !== article.title);
       localStorage.setItem('savedNews', JSON.stringify(filtered));
@@ -71,6 +86,28 @@ function NewsCard({ article, language = 'en' }) {
       localStorage.setItem('savedNews', JSON.stringify(existing));
       setIsSaved(true);
     }
+=======
+    let updated = [];
+
+    if (isSaved) {
+      // Unsave Article
+      updated = existing.filter(item => item.title !== article.title);
+      setIsSaved(false);
+    } else {
+      // Save Article
+      updated = [...existing, article];
+      setIsSaved(true);
+    }
+
+    localStorage.setItem('savedNews', JSON.stringify(updated));
+    
+    // Dispatch event so Navbar badge updates instantly
+    window.dispatchEvent(new Event('savedNewsChanged'));
+
+    if (onSaveToggle) {
+      onSaveToggle();
+    }
+>>>>>>> 3cc854b (Initial clean release)
   };
 
   const handleShare = () => {
@@ -110,7 +147,11 @@ function NewsCard({ article, language = 'en' }) {
             {article.description?.substring(0, 100)}...
           </Card.Text>
 
+<<<<<<< HEAD
           {/* ⚡ Quick AI Summary Button (Solid Yellow + Crisp Black Text) */}
+=======
+          {/* ⚡ Quick AI Summary Button */}
+>>>>>>> 3cc854b (Initial clean release)
           <Button 
             variant="warning" 
             size="sm" 
@@ -131,13 +172,30 @@ function NewsCard({ article, language = 'en' }) {
             </Button>
 
             <div className="d-flex gap-2">
+<<<<<<< HEAD
               <Button variant="light" size="sm" onClick={handleSave}>
                 {isSaved ? <FaBookmark className="text-warning" /> : <FaRegBookmark />}
+=======
+              <Button variant="light" size="sm" onClick={handleSave} title={isSaved ? "Remove from Saved" : "Save Article"}>
+                {isSaved ? <FaBookmark className="text-warning fs-6" /> : <FaRegBookmark className="fs-6" />}
+>>>>>>> 3cc854b (Initial clean release)
               </Button>
               <Button variant="light" size="sm" onClick={handleShare}>
                 <FaShareAlt />
               </Button>
+<<<<<<< HEAD
               <Button variant="dark" size="sm" href={article.url || "#"} target="_blank">
+=======
+              
+              {/* 🔗 Opens original article URL in a new tab */}
+              <Button 
+                variant="dark" 
+                size="sm" 
+                href={article.url || "#"} 
+                target="_blank" 
+                rel="noreferrer"
+              >
+>>>>>>> 3cc854b (Initial clean release)
                 Read
               </Button>
             </div>

@@ -1,192 +1,224 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useParams } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './App.css';
-import Ticker from './components/Ticker';
-import Navbar from './components/Navbar';
-import SearchBar from './components/SearchBar';
-import HeroNews from './components/HeroNews';
+
+import AppNavbar from './components/Navbar';
 import NewsCard from './components/NewsCard';
-import Footer from './components/Footer';
 import SubmitNews from './components/SubmitNews';
 import AdminPanel from './components/AdminPanel';
-import SavedNews from './components/SavedNews';
+import AskNewsChat from './components/AskNewsChat';
 
-// Full 10 Backup News Items (Vercel par API limit poori thay to pan Site poori 10 cards sathe dekhay)
-const fallbackNews = [
+const GNEWS_API_KEY = process.env.REACT_APP_GNEWS_API_KEY || "b890dfdbc88d6283fbd54075e88eccaa";
+
+const initialNews = [
   {
-    category: "general",
+    id: 1,
     title: "India Advances Big in AI & Space Technology Innovations",
     description: "Indian tech startups and research institutes achieve major breakthroughs in artificial intelligence and space exploration projects this year.",
+    category: "general",
+    author: "Tech Desk",
     image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=800&auto=format&fit=crop",
-    url: "https://google.com"
+    url: "https://www.isro.gov.in"
   },
   {
-    category: "business",
+    id: 2,
     title: "Global Stock Markets Show Positive Growth in Q3",
     description: "Financial markets across major economies see steady upward trend driven by tech stocks and strong quarterly corporate earnings.",
-    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=600&auto=format&fit=crop",
-    url: "https://google.com"
-  },
-  {
-    category: "science",
-    title: "Major Breakthrough in Renewable Solar Energy Storage",
-    description: "Engineers develop high-efficiency batteries that dramatically increase the storage capacity for solar and wind energy grids.",
-    image: "https://images.unsplash.com/photo-1509391365360-2e959784a276?q=80&w=600&auto=format&fit=crop",
-    url: "https://google.com"
-  },
-  {
-    category: "sports",
-    title: "National Sports Championship Highlights Emerging Young Talent",
-    description: "Young athletes set unprecedented national records in track and field events during the annual national championship series.",
-    image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=600&auto=format&fit=crop",
-    url: "https://google.com"
-  },
-  {
-    category: "technology",
-    title: "Next-Gen Quantum Computing Microprocessors Unveiled",
-    description: "New quantum microprocessors demonstrate unprecedented processing speeds, paving the way for next-level cybersecurity and AI modeling.",
-    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=600&auto=format&fit=crop",
-    url: "https://google.com"
-  },
-  {
-    category: "world",
-    title: "Global Climate Summit Reaches Landmark Accord on Clean Energy",
-    description: "Representatives from over 190 nations sign a historic agreement aiming to accelerate clean energy adoption and reduce emissions.",
-    image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop",
-    url: "https://google.com"
-  },
-  {
-    category: "health",
-    title: "New Healthcare Research Shows promising Results in Preventive Care",
-    description: "Medical scientists report significant progress in developing universal health protection solutions in late-stage clinical trials.",
-    image: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=600&auto=format&fit=crop",
-    url: "https://google.com"
-  },
-  {
-    category: "technology",
-    title: "Cybersecurity Experts Launch AI-Powered Threat Defense Protocol",
-    description: "Automated threat detection systems leverage deep learning algorithms to neutralize zero-day vulnerabilities in real-time.",
-    image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop",
-    url: "https://google.com"
-  },
-  {
     category: "business",
-    title: "E-Commerce Sector Sees Unprecedented Festival Season Growth",
-    description: "Retail logistics and digital payments hit record transaction volumes as consumer demand surges across tier-2 and tier-3 cities.",
-    image: "https://images.unsplash.com/photo-1556742049-0a670f4a4591?q=80&w=600&auto=format&fit=crop",
-    url: "https://google.com"
-  },
-  {
-    category: "sports",
-    title: "International Tournament: Intense Finals Underway",
-    description: "Top international teams battle in high-stakes championship matches with record-breaking crowd turnouts and thrilling finishes.",
-    image: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=600&auto=format&fit=crop",
-    url: "https://google.com"
+    author: "Finance Bureau",
+    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=600&auto=format&fit=crop",
+    url: "https://www.moneycontrol.com"
   }
 ];
 
-function NewsFeed({ language, search, setSearch }) {
+function NewsFeed({ newsList, setNewsList, language }) {
   const { categoryName } = useParams();
-  const currentCategory = categoryName || "general";
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const [news, setNews] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const currentCategory = categoryName || 'general';
 
   useEffect(() => {
-    const fetchNews = async () => {
-      setIsLoading(true);
-      let userApprovedNews = [];
+    setLoading(true);
 
-      // 1. Fetch Local User Approved News (Only in Development)
-      if (window.location.hostname === "localhost") {
-        try {
-          const userNewsRes = await fetch('http://localhost:5000/api/user-news');
-          if (userNewsRes.ok) {
-            userApprovedNews = await userNewsRes.json();
+    let url = "";
+    if (searchTerm.trim().length > 0) {
+      url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(searchTerm.trim())}&lang=${language}&max=10&apikey=${GNEWS_API_KEY}`;
+    } else {
+      let apiCategory = currentCategory.toLowerCase();
+      if (apiCategory === 'tech') apiCategory = 'technology';
+      url = `https://gnews.io/api/v4/top-headlines?category=${apiCategory}&lang=${language}&max=10&apikey=${GNEWS_API_KEY}`;
+    }
+
+    const timer = setTimeout(() => {
+      fetch(url)
+        .then((res) => res.json())
+        .then((data) => {
+          let apiArticles = [];
+          if (data.articles && data.articles.length > 0) {
+            apiArticles = data.articles.map((item, index) => ({
+              id: `api-${index + 1}`,
+              title: item.title,
+              description: item.description,
+              category: currentCategory,
+              author: item.source?.name || 'GNews Desk',
+              image: item.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop",
+              url: item.url
+            }));
           }
-        } catch (e) {
-          console.log("Backend offline or local fetch skipped");
-        }
-      }
 
-      // 2. Fetch External API News
-      try {
-        let url = `https://gnews.io/api/v4/top-headlines?category=${currentCategory}&lang=${language}&country=in&max=10&apikey=b890dfdbc88d6283fbd54075e88eccaa`;
-        
-        if (search) {
-          url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(search)}&lang=${language}&country=in&max=10&apikey=b890dfdbc88d6283fbd54075e88eccaa`;
-        }
-
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data && data.articles && data.articles.length > 0) {
-          const filteredUserNews = userApprovedNews.filter(n => n.category === currentCategory || currentCategory === 'general');
-          setNews([...filteredUserNews, ...data.articles]);
-        } else {
-          // If API limit hit, filter fallback by category or show full list for general
-          const categoryFallback = fallbackNews.filter(
-            n => n.category === currentCategory || currentCategory === 'general'
+          // 🌟 Load Approved Custom News from LocalStorage & Put them at Position #1!
+          const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
+          
+          const matchedApproved = localApproved.filter(item => 
+            currentCategory === 'general' || item.category?.toLowerCase() === currentCategory.toLowerCase()
           );
-          setNews([...userApprovedNews, ...(categoryFallback.length > 0 ? categoryFallback : fallbackNews)]);
-        }
-      } catch (error) {
-        console.error("API Fetch Error:", error);
-        setNews([...userApprovedNews, ...fallbackNews]);
-      } finally {
-        setIsLoading(false);
-      }
+
+          // Prepend approved news so they appear FIRST in Hero Breaking Banner
+          setNewsList([...matchedApproved, ...apiArticles]);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("GNews API error:", err);
+          const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
+          setNewsList(localApproved);
+          setLoading(false);
+        });
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [currentCategory, language, searchTerm, setNewsList]);
+
+  // Handle live approved news events
+  useEffect(() => {
+    const handleApprovedChange = () => {
+      const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
+      const matchedApproved = localApproved.filter(item => 
+        currentCategory === 'general' || item.category?.toLowerCase() === currentCategory.toLowerCase()
+      );
+      setNewsList(prev => {
+        const nonApproved = prev.filter(item => !item.id?.toString().startsWith('user-') && typeof item.id !== 'number');
+        return [...matchedApproved, ...nonApproved];
+      });
     };
 
-    fetchNews();
-  }, [currentCategory, language, search]);
+    window.addEventListener('approvedNewsChanged', handleApprovedChange);
+    return () => window.removeEventListener('approvedNewsChanged', handleApprovedChange);
+  }, [currentCategory, setNewsList]);
+
+  const heroArticle = newsList.length > 0 ? newsList[0] : null;
+  const gridArticles = newsList.length > 1 ? newsList.slice(1) : [];
 
   return (
-    <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px' }}>
-      <SearchBar search={search} setSearch={setSearch} />
-      
-      {isLoading ? (
-        <div className="text-center mt-5">
-          <h4>Loading Latest News...</h4>
+    <div className="container my-4">
+      {/* 🔍 Search Bar */}
+      <div className="mb-4" style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <input 
+          type="text" 
+          className="form-control form-control-lg shadow-sm rounded-pill px-4 fs-6" 
+          placeholder="🔍 Search live news or topics..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      {loading ? (
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status"></div>
+          <p className="mt-2 text-muted fw-bold">Fetching Live News...</p>
+        </div>
+      ) : newsList.length === 0 ? (
+        <div className="text-center py-5 text-muted card shadow-sm border-0 p-5 my-4">
+          <h5>🔍 No news articles found for "{searchTerm}".</h5>
         </div>
       ) : (
         <>
-          {news.length > 0 && <HeroNews article={news[0]} />}
-
-          <div style={{ marginTop: '40px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: 'bold', borderBottom: '3px solid #3b82f6', display: 'inline-block', paddingBottom: '5px', marginBottom: '20px' }}>
-              Latest {currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} News
-            </h2>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-              {news.slice(1).map((article, index) => (
-                <NewsCard key={index} article={article} />
-              ))}
+          {/* 🌟 Hero Breaking Banner (Shows Approved News Here!) */}
+          {heroArticle && (
+            <div className="card shadow-lg border-0 rounded-4 overflow-hidden mb-5">
+              <div className="row g-0 align-items-center">
+                <div className="col-md-7">
+                  <img 
+                    src={heroArticle.image} 
+                    alt={heroArticle.title} 
+                    className="img-fluid w-100" 
+                    style={{ height: '340px', objectFit: 'cover' }}
+                  />
+                </div>
+                <div className="col-md-5 p-4">
+                  <span className="badge bg-danger mb-2 px-3 py-2 uppercase fw-bold">🔥 Breaking News</span>
+                  <h3 className="fw-bold mb-3">{heroArticle.title}</h3>
+                  <p className="text-secondary mb-4">{heroArticle.description}</p>
+                  <a href={heroArticle.url || "#"} target="_blank" rel="noreferrer" className="btn btn-primary fw-bold px-4 py-2 rounded-pill">
+                    Read Full Article
+                  </a>
+                </div>
+              </div>
             </div>
+          )}
+
+          {/* 📰 News Cards Grid */}
+          <h3 className="fw-bold mb-4 border-start border-4 border-primary ps-3">
+            {searchTerm.trim() ? `Search Results for "${searchTerm}"` : `Latest ${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} News`}
+          </h3>
+
+          <div className="row g-4">
+            {gridArticles.map((article, idx) => (
+              <div className="col-md-6 col-lg-4" key={article.id || idx}>
+                <NewsCard article={article} language={language} />
+              </div>
+            ))}
           </div>
         </>
       )}
-    </main>
+    </div>
+  );
+}
+
+// 🔖 Saved Bookmarks View Component
+function SavedNews({ language }) {
+  const [savedItems, setSavedItems] = useState([]);
+
+  const refreshSaved = () => {
+    const saved = JSON.parse(localStorage.getItem('savedNews') || '[]');
+    setSavedItems(saved);
+  };
+
+  useEffect(() => {
+    refreshSaved();
+    window.addEventListener('savedNewsChanged', refreshSaved);
+    return () => window.removeEventListener('savedNewsChanged', refreshSaved);
+  }, []);
+
+  return (
+    <div className="container my-5">
+      <h3 className="fw-bold mb-4">🔖 Saved Articles ({savedItems.length})</h3>
+      {savedItems.length === 0 ? (
+        <div className="text-center py-5 text-muted card shadow-sm border-0 p-5">
+          <h5>No bookmarked articles yet. Click bookmark icon on any news card to save!</h5>
+        </div>
+      ) : (
+        <div className="row g-4">
+          {savedItems.map((article, idx) => (
+            <div className="col-md-6 col-lg-4" key={article.id || idx}>
+              <NewsCard article={article} language={language} onSaveToggle={refreshSaved} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
 function App() {
-  const [language, setLanguage] = useState("en");
-  const [search, setSearch] = useState("");
+  const [news, setNews] = useState(initialNews);
+  const [language, setLanguage] = useState('en');
   const [darkMode, setDarkMode] = useState(false);
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-bs-theme', darkMode ? 'dark' : 'light');
-    document.body.style.backgroundColor = darkMode ? '#121212' : '#f9fafb';
-    document.body.style.color = darkMode ? '#ffffff' : '#000000';
-  }, [darkMode]);
-
   return (
-    <Router>
-      <div style={{ minHeight: '100vh', fontFamily: 'sans-serif' }}>
-        <Ticker />
-        <Navbar 
+    <div className={darkMode ? "bg-dark text-white min-vh-100" : "bg-light text-dark min-vh-100"} style={{ transition: 'all 0.3s' }}>
+      <Router>
+        <AppNavbar 
           language={language} 
           setLanguage={setLanguage} 
           darkMode={darkMode} 
@@ -194,16 +226,21 @@ function App() {
         />
 
         <Routes>
-          <Route path="/" element={<NewsFeed language={language} search={search} setSearch={setSearch} />} />
-          <Route path="/category/:categoryName" element={<NewsFeed language={language} search={search} setSearch={setSearch} />} />
+          <Route path="/" element={<NewsFeed newsList={news} setNewsList={setNews} language={language} />} />
+          <Route path="/category/:categoryName" element={<NewsFeed newsList={news} setNewsList={setNews} language={language} />} />
+          <Route path="/saved" element={<SavedNews language={language} />} />
           <Route path="/submit-news" element={<SubmitNews />} />
           <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/saved" element={<SavedNews />} />
         </Routes>
+        
+        <AskNewsChat newsList={news} />
 
-        <Footer />
-      </div>
-    </Router>
+        <footer className="text-center py-4 border-top mt-5 text-muted small">
+          <p className="mb-0">© 2026 G-News Platform. All rights reserved.</p>
+          <p className="fw-bold text-primary mb-0">Developed by Tejas😎</p>
+        </footer>
+      </Router>
+    </div>
   );
 }
 
