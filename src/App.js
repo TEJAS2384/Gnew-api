@@ -10,55 +10,6 @@ import AskNewsChat from './components/AskNewsChat';
 
 const GNEWS_API_KEY = "b890dfdbc88d6283fbd54075e88eccaa";
 
-// 🛡️ 10 Backup News Articles (API limit પૂરી થાય તો પણ સાઈટ મસ્ત દેખાશે)
-const fallbackNews = [
-  {
-    id: "fb-1",
-    title: "India Advances Big in AI & Space Technology Innovations",
-    description: "Indian tech startups and research institutes achieve major breakthroughs in artificial intelligence and space exploration projects this year.",
-    category: "general",
-    author: "Tech Desk",
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=800&auto=format&fit=crop",
-    url: "https://www.isro.gov.in"
-  },
-  {
-    id: "fb-2",
-    title: "Global Stock Markets Show Positive Growth in Q3",
-    description: "Financial markets across major economies see steady upward trend driven by tech stocks and strong quarterly corporate earnings.",
-    category: "business",
-    author: "Finance Bureau",
-    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=600&auto=format&fit=crop",
-    url: "https://www.moneycontrol.com"
-  },
-  {
-    id: "fb-3",
-    title: "Major Breakthrough in Renewable Solar Energy Storage",
-    description: "Engineers develop high-efficiency batteries that dramatically increase the storage capacity for solar and wind energy grids.",
-    category: "science",
-    author: "Science Daily",
-    image: "https://images.unsplash.com/photo-1509391365360-2e959784a276?q=80&w=600&auto=format&fit=crop",
-    url: "https://www.sciencedaily.com"
-  },
-  {
-    id: "fb-4",
-    title: "National Sports Championship Highlights Emerging Young Talent",
-    description: "Young athletes set unprecedented national records in track and field events during the annual national championship series.",
-    category: "sports",
-    author: "Sports Desk",
-    image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=600&auto=format&fit=crop",
-    url: "https://espn.in"
-  },
-  {
-    id: "fb-5",
-    title: "Next-Gen Quantum Computing Microprocessors Unveiled",
-    description: "New quantum microprocessors demonstrate unprecedented processing speeds, paving the way for next-level cybersecurity and AI modeling.",
-    category: "tech",
-    author: "Tech Crunch",
-    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=600&auto=format&fit=crop",
-    url: "https://techcrunch.com"
-  }
-];
-
 function NewsFeed({ newsList, setNewsList, language }) {
   const { categoryName } = useParams();
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,15 +44,9 @@ function NewsFeed({ newsList, setNewsList, language }) {
               image: item.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop",
               url: item.url
             }));
-          } else {
-            // 💡 If API Limit or Error occurs, filter Backup News by Category
-            apiArticles = fallbackNews.filter(
-              n => currentCategory === 'general' || n.category.toLowerCase() === currentCategory.toLowerCase()
-            );
-            if (apiArticles.length === 0) apiArticles = fallbackNews;
           }
 
-          // 🌟 Load Approved Custom News from LocalStorage & Put them at Position #1!
+          // 🌟 Load Approved Custom News from LocalStorage
           const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
           const matchedApproved = localApproved.filter(item => 
             currentCategory === 'general' || item.category?.toLowerCase() === currentCategory.toLowerCase()
@@ -113,7 +58,7 @@ function NewsFeed({ newsList, setNewsList, language }) {
         .catch((err) => {
           console.error("GNews API error:", err);
           const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
-          setNewsList([...localApproved, ...fallbackNews]);
+          setNewsList(localApproved);
           setLoading(false);
         });
     }, 400);
@@ -161,7 +106,7 @@ function NewsFeed({ newsList, setNewsList, language }) {
         </div>
       ) : newsList.length === 0 ? (
         <div className="text-center py-5 text-muted card shadow-sm border-0 p-5 my-4">
-          <h5>🔍 No news articles found for "{searchTerm}".</h5>
+          <h5>🔍 No news articles found right now.</h5>
         </div>
       ) : (
         <>
@@ -243,7 +188,7 @@ function SavedNews({ language }) {
 }
 
 function App() {
-  const [news, setNews] = useState(fallbackNews);
+  const [news, setNews] = useState([]);
   const [language, setLanguage] = useState('en');
   const [darkMode, setDarkMode] = useState(false);
 
