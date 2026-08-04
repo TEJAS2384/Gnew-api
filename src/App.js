@@ -8,25 +8,54 @@ import SubmitNews from './components/SubmitNews';
 import AdminPanel from './components/AdminPanel';
 import AskNewsChat from './components/AskNewsChat';
 
-// 🔑 Your New Fresh GNews API Key
 const GNEWS_API_KEY = "700109c3b2c10f2cd490f40d7c002bab";
 
-// Dynamic Unique Image Fallback Engine
-const getUniqueImage = (item, index) => {
+// 🖼️ Category-Specific Dynamic Image Engine
+const getUniqueImage = (item, category, index) => {
   if (item.image && item.image.startsWith('http')) return item.image;
   if (item.urlToImage && item.urlToImage.startsWith('http')) return item.urlToImage;
   
-  const photoIds = [
-    "1504711434969-e33886168f5c",
-    "1518770660439-4636190af475",
-    "1611974789855-9c2a0a7236a3",
-    "1509391365360-2e959784a276",
-    "1461896836934-ffe607ba8211",
-    "1526374965328-7f61d4dc18c5",
-    "1495020689067-958852a7765e",
-    "1585829365295-ab7cd400c167"
-  ];
-  return `https://images.unsplash.com/photo-${photoIds[index % photoIds.length]}?q=80&w=600&auto=format&fit=crop`;
+  const categoryImages = {
+    tech: [
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=600&auto=format&fit=crop"
+    ],
+    business: [
+      "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600&auto=format&fit=crop"
+    ],
+    science: [
+      "https://images.unsplash.com/photo-1509391365360-2e959784a276?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1507668077129-56e32842fceb?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=600&auto=format&fit=crop"
+    ],
+    sports: [
+      "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1517649763962-0c623266010b?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop"
+    ],
+    health: [
+      "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1505576399279-565b52d4ac71?q=80&w=600&auto=format&fit=crop"
+    ],
+    world: [
+      "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop"
+    ],
+    general: [
+      "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?q=80&w=600&auto=format&fit=crop"
+    ]
+  };
+
+  const catKey = (category || 'general').toLowerCase();
+  const pool = categoryImages[catKey] || categoryImages.general;
+  return pool[index % pool.length];
 };
 
 function NewsFeed({ newsList, setNewsList, language }) {
@@ -42,65 +71,82 @@ function NewsFeed({ newsList, setNewsList, language }) {
     let categoryForApi = currentCategory.toLowerCase();
     if (categoryForApi === 'tech') categoryForApi = 'technology';
 
-    let gnewsUrl = "";
+    let rawGnewsUrl = "";
     if (searchTerm.trim().length > 0) {
-      gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(searchTerm.trim())}&lang=${language}&max=12&apikey=${GNEWS_API_KEY}`;
+      rawGnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(searchTerm.trim())}&lang=${language}&max=12&apikey=${GNEWS_API_KEY}`;
     } else {
-      gnewsUrl = `https://gnews.io/api/v4/top-headlines?category=${categoryForApi}&lang=${language}&max=12&apikey=${GNEWS_API_KEY}`;
+      rawGnewsUrl = `https://gnews.io/api/v4/top-headlines?category=${categoryForApi}&lang=${language}&max=12&apikey=${GNEWS_API_KEY}`;
     }
 
+    // 🚀 CORS Proxy wrapper to prevent Vercel domain blocks
+    const proxyGnewsUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rawGnewsUrl)}`;
+
     const timer = setTimeout(() => {
-      fetch(gnewsUrl)
+      fetch(proxyGnewsUrl)
         .then((res) => {
-          if (!res.ok) throw new Error(`API Error: ${res.status}`);
+          if (!res.ok) throw new Error("GNews error");
           return res.json();
         })
         .then((data) => {
-          let apiArticles = [];
           if (data && data.articles && data.articles.length > 0) {
-            apiArticles = data.articles.map((item, index) => ({
+            return data.articles.map((item, index) => ({
               id: `api-${index + 1}`,
               title: item.title,
               description: item.description || 'Latest news update.',
               category: currentCategory,
               author: item.source?.name || 'GNews Desk',
-              image: getUniqueImage(item, index),
+              image: getUniqueImage(item, currentCategory, index),
               url: item.url
             }));
+          } else {
+            throw new Error("No articles from GNews");
           }
+        })
+        .catch(() => {
+          // 🚀 Category-Specific Fallback Feed
+          let rssTopic = "";
+          if (categoryForApi === 'technology') rssTopic = "headlines/section/topic/TECHNOLOGY";
+          else if (categoryForApi === 'business') rssTopic = "headlines/section/topic/BUSINESS";
+          else if (categoryForApi === 'sports') rssTopic = "headlines/section/topic/SPORTS";
+          else if (categoryForApi === 'science') rssTopic = "headlines/section/topic/SCIENCE";
+          else if (categoryForApi === 'health') rssTopic = "headlines/section/topic/HEALTH";
+          else if (categoryForApi === 'world') rssTopic = "headlines/section/topic/WORLD";
 
+          const rssUrl = rssTopic 
+            ? `https://news.google.com/rss/${rssTopic}?hl=en-IN&gl=IN&ceid=IN:en`
+            : `https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en`;
+
+          const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+
+          return fetch(rss2jsonUrl)
+            .then(res => res.json())
+            .then(rssData => {
+              if (rssData && rssData.items && rssData.items.length > 0) {
+                return rssData.items.slice(0, 12).map((item, index) => ({
+                  id: `rss-${index + 1}`,
+                  title: item.title,
+                  description: item.description ? item.description.replace(/<[^>]*>?/gm, '').substring(0, 120) + '...' : 'Live news update',
+                  category: currentCategory,
+                  author: item.author || 'Google News',
+                  image: getUniqueImage(item, currentCategory, index),
+                  url: item.link
+                }));
+              }
+              return [];
+            });
+        })
+        .then((finalArticles) => {
           const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
           const matchedApproved = localApproved.filter(item => 
             currentCategory === 'general' || item.category?.toLowerCase() === currentCategory.toLowerCase()
           );
 
-          setNewsList([...matchedApproved, ...apiArticles]);
+          setNewsList([...matchedApproved, ...(finalArticles || [])]);
           setLoading(false);
         })
         .catch((err) => {
-          console.error("GNews API fetch error:", err);
-          // Fallback to Google News RSS Feed if limit hit
-          const rssUrl = `https://news.google.com/rss?hl=${language}&gl=IN&ceid=IN:${language}`;
-          const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
-
-          fetch(rss2jsonUrl)
-            .then(res => res.json())
-            .then(rssData => {
-              const rssArticles = (rssData.items || []).slice(0, 10).map((item, index) => ({
-                id: `rss-${index + 1}`,
-                title: item.title,
-                description: item.description ? item.description.replace(/<[^>]*>?/gm, '').substring(0, 120) + '...' : 'Live update',
-                category: currentCategory,
-                author: item.author || 'Google News',
-                image: getUniqueImage(item, index),
-                url: item.link
-              }));
-
-              const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
-              setNewsList([...localApproved, ...rssArticles]);
-              setLoading(false);
-            })
-            .catch(() => setLoading(false));
+          console.error("News fetch error:", err);
+          setLoading(false);
         });
     }, 400);
 
