@@ -10,55 +10,6 @@ import AskNewsChat from './components/AskNewsChat';
 
 const GNEWS_API_KEY = "b890dfdbc88d6283fbd54075e88eccaa";
 
-// 🛡️ Safe Fallback News Articles (API limit પૂરી થાય તો પણ સાઈટ ક્યારેય ખાલી નહીં રહે)
-const fallbackNews = [
-  {
-    id: "fb-1",
-    title: "India Advances Big in AI & Space Technology Innovations",
-    description: "Indian tech startups and research institutes achieve major breakthroughs in artificial intelligence and space exploration projects this year.",
-    category: "general",
-    author: "Tech Desk",
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=800&auto=format&fit=crop",
-    url: "https://www.isro.gov.in"
-  },
-  {
-    id: "fb-2",
-    title: "Global Stock Markets Show Positive Growth in Q3",
-    description: "Financial markets across major economies see steady upward trend driven by tech stocks and strong quarterly corporate earnings.",
-    category: "business",
-    author: "Finance Bureau",
-    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=600&auto=format&fit=crop",
-    url: "https://www.moneycontrol.com"
-  },
-  {
-    id: "fb-3",
-    title: "Major Breakthrough in Renewable Solar Energy Storage",
-    description: "Engineers develop high-efficiency batteries that dramatically increase the storage capacity for solar and wind energy grids.",
-    category: "science",
-    author: "Science Daily",
-    image: "https://images.unsplash.com/photo-1509391365360-2e959784a276?q=80&w=600&auto=format&fit=crop",
-    url: "https://www.sciencedaily.com"
-  },
-  {
-    id: "fb-4",
-    title: "National Sports Championship Highlights Emerging Young Talent",
-    description: "Young athletes set unprecedented national records in track and field events during the annual national championship series.",
-    category: "sports",
-    author: "Sports Desk",
-    image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=600&auto=format&fit=crop",
-    url: "https://espn.in"
-  },
-  {
-    id: "fb-5",
-    title: "Next-Gen Quantum Computing Microprocessors Unveiled",
-    description: "New quantum microprocessors demonstrate unprecedented processing speeds, paving the way for next-level cybersecurity and AI modeling.",
-    category: "tech",
-    author: "Tech Crunch",
-    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=600&auto=format&fit=crop",
-    url: "https://techcrunch.com"
-  }
-];
-
 function NewsFeed({ newsList, setNewsList, language }) {
   const { categoryName } = useParams();
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,51 +20,71 @@ function NewsFeed({ newsList, setNewsList, language }) {
   useEffect(() => {
     setLoading(true);
 
-    let url = "";
+    let categoryForApi = currentCategory.toLowerCase();
+    if (categoryForApi === 'tech') categoryForApi = 'technology';
+    if (categoryForApi === 'world') categoryForApi = 'general';
+
+    let gnewsUrl = "";
     if (searchTerm.trim().length > 0) {
-      url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(searchTerm.trim())}&lang=${language}&max=10&apikey=${GNEWS_API_KEY}`;
+      gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(searchTerm.trim())}&lang=${language}&max=10&apikey=${GNEWS_API_KEY}`;
     } else {
-      let apiCategory = currentCategory.toLowerCase();
-      if (apiCategory === 'tech') apiCategory = 'technology';
-      url = `https://gnews.io/api/v4/top-headlines?category=${apiCategory}&lang=${language}&max=10&apikey=${GNEWS_API_KEY}`;
+      gnewsUrl = `https://gnews.io/api/v4/top-headlines?category=${categoryForApi}&lang=${language}&max=10&apikey=${GNEWS_API_KEY}`;
     }
 
     const timer = setTimeout(() => {
-      fetch(url)
-        .then((res) => res.json())
+      // 🌐 Primary Fetch: Try GNews API
+      fetch(gnewsUrl)
+        .then((res) => {
+          if (!res.ok) throw new Error(`GNews status ${res.status}`);
+          return res.json();
+        })
         .then((data) => {
-          let apiArticles = [];
           if (data && data.articles && data.articles.length > 0) {
-            apiArticles = data.articles.map((item, index) => ({
+            return data.articles.map((item, index) => ({
               id: `api-${index + 1}`,
               title: item.title,
               description: item.description,
               category: currentCategory,
               author: item.source?.name || 'GNews Desk',
-              image: item.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop",
+              image: item.image || item.urlToImage || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop",
               url: item.url
             }));
           } else {
-            // API limit કે error આવે તો ઓટોમેટિક બેકઅપ લોડ થશે
-            apiArticles = fallbackNews.filter(
-              n => currentCategory === 'general' || n.category.toLowerCase() === currentCategory.toLowerCase()
-            );
-            if (apiArticles.length === 0) apiArticles = fallbackNews;
+            throw new Error("No articles returned from GNews");
           }
-
-          // 🌟 Load Approved Custom News from LocalStorage
+        })
+        .catch(() => {
+          // 🚀 Bulletproof Auto-Fallback: Fetch Real Live News from Saurav.tech Open News API (Zero API key / No CORS limits)
+          const backupLiveUrl = `https://saurav.tech/NewsAPI/top-headlines/category/${categoryForApi}/in.json`;
+          return fetch(backupLiveUrl)
+            .then((res) => res.json())
+            .then((sauravData) => {
+              if (sauravData && sauravData.articles && sauravData.articles.length > 0) {
+                return sauravData.articles.slice(0, 10).map((item, index) => ({
+                  id: `live-${index + 1}`,
+                  title: item.title,
+                  description: item.description,
+                  category: currentCategory,
+                  author: item.source?.name || 'Live News Desk',
+                  image: item.urlToImage || item.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop",
+                  url: item.url
+                }));
+              }
+              return [];
+            });
+        })
+        .then((finalArticles) => {
+          // 🌟 Merge with User Approved News from LocalStorage at position #1
           const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
           const matchedApproved = localApproved.filter(item => 
             currentCategory === 'general' || item.category?.toLowerCase() === currentCategory.toLowerCase()
           );
 
-          setNewsList([...matchedApproved, ...apiArticles]);
+          setNewsList([...matchedApproved, ...(finalArticles || [])]);
           setLoading(false);
         })
         .catch((err) => {
-          console.error("GNews API error:", err);
-          const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
-          setNewsList([...localApproved, ...fallbackNews]);
+          console.error("All live news sources encountered error:", err);
           setLoading(false);
         });
     }, 400);
@@ -243,7 +214,7 @@ function SavedNews({ language }) {
 }
 
 function App() {
-  const [news, setNews] = useState(fallbackNews);
+  const [news, setNews] = useState([]);
   const [language, setLanguage] = useState('en');
   const [darkMode, setDarkMode] = useState(false);
 
