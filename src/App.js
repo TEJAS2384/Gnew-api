@@ -8,7 +8,26 @@ import SubmitNews from './components/SubmitNews';
 import AdminPanel from './components/AdminPanel';
 import AskNewsChat from './components/AskNewsChat';
 
-const GNEWS_API_KEY = "b890dfdbc88d6283fbd54075e88eccaa";
+// 🔑 Your New Fresh GNews API Key
+const GNEWS_API_KEY = "700109c3b2c10f2cd490f40d7c002bab";
+
+// Dynamic Unique Image Fallback Engine
+const getUniqueImage = (item, index) => {
+  if (item.image && item.image.startsWith('http')) return item.image;
+  if (item.urlToImage && item.urlToImage.startsWith('http')) return item.urlToImage;
+  
+  const photoIds = [
+    "1504711434969-e33886168f5c",
+    "1518770660439-4636190af475",
+    "1611974789855-9c2a0a7236a3",
+    "1509391365360-2e959784a276",
+    "1461896836934-ffe607ba8211",
+    "1526374965328-7f61d4dc18c5",
+    "1495020689067-958852a7765e",
+    "1585829365295-ab7cd400c167"
+  ];
+  return `https://images.unsplash.com/photo-${photoIds[index % photoIds.length]}?q=80&w=600&auto=format&fit=crop`;
+};
 
 function NewsFeed({ newsList, setNewsList, language }) {
   const { categoryName } = useParams();
@@ -23,20 +42,17 @@ function NewsFeed({ newsList, setNewsList, language }) {
     let categoryForApi = currentCategory.toLowerCase();
     if (categoryForApi === 'tech') categoryForApi = 'technology';
 
-    let rawGnewsUrl = "";
+    let gnewsUrl = "";
     if (searchTerm.trim().length > 0) {
-      rawGnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(searchTerm.trim())}&lang=${language}&max=10&apikey=${GNEWS_API_KEY}`;
+      gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(searchTerm.trim())}&lang=${language}&max=12&apikey=${GNEWS_API_KEY}`;
     } else {
-      rawGnewsUrl = `https://gnews.io/api/v4/top-headlines?category=${categoryForApi}&lang=${language}&max=10&apikey=${GNEWS_API_KEY}`;
+      gnewsUrl = `https://gnews.io/api/v4/top-headlines?category=${categoryForApi}&lang=${language}&max=12&apikey=${GNEWS_API_KEY}`;
     }
 
-    // 🚀 CORS Proxy added so Vercel gets the same live GNews API response as Localhost
-    const proxyGnewsUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rawGnewsUrl)}`;
-
     const timer = setTimeout(() => {
-      fetch(proxyGnewsUrl)
+      fetch(gnewsUrl)
         .then((res) => {
-          if (!res.ok) throw new Error("API error");
+          if (!res.ok) throw new Error(`API Error: ${res.status}`);
           return res.json();
         })
         .then((data) => {
@@ -45,10 +61,10 @@ function NewsFeed({ newsList, setNewsList, language }) {
             apiArticles = data.articles.map((item, index) => ({
               id: `api-${index + 1}`,
               title: item.title,
-              description: item.description,
+              description: item.description || 'Latest news update.',
               category: currentCategory,
               author: item.source?.name || 'GNews Desk',
-              image: item.image || item.urlToImage || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop",
+              image: getUniqueImage(item, index),
               url: item.url
             }));
           }
@@ -61,24 +77,27 @@ function NewsFeed({ newsList, setNewsList, language }) {
           setNewsList([...matchedApproved, ...apiArticles]);
           setLoading(false);
         })
-        .catch(() => {
-          // Backup fallback if proxy is busy
-          const backupLiveUrl = `https://saurav.tech/NewsAPI/top-headlines/category/${categoryForApi}/in.json`;
-          fetch(backupLiveUrl)
-            .then((res) => res.json())
-            .then((sauravData) => {
-              const apiArticles = (sauravData.articles || []).slice(0, 10).map((item, index) => ({
-                id: `live-${index + 1}`,
+        .catch((err) => {
+          console.error("GNews API fetch error:", err);
+          // Fallback to Google News RSS Feed if limit hit
+          const rssUrl = `https://news.google.com/rss?hl=${language}&gl=IN&ceid=IN:${language}`;
+          const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+
+          fetch(rss2jsonUrl)
+            .then(res => res.json())
+            .then(rssData => {
+              const rssArticles = (rssData.items || []).slice(0, 10).map((item, index) => ({
+                id: `rss-${index + 1}`,
                 title: item.title,
-                description: item.description,
+                description: item.description ? item.description.replace(/<[^>]*>?/gm, '').substring(0, 120) + '...' : 'Live update',
                 category: currentCategory,
-                author: item.source?.name || 'Live News Desk',
-                image: item.urlToImage || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop",
-                url: item.url
+                author: item.author || 'Google News',
+                image: getUniqueImage(item, index),
+                url: item.link
               }));
 
               const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
-              setNewsList([...localApproved, ...apiArticles]);
+              setNewsList([...localApproved, ...rssArticles]);
               setLoading(false);
             })
             .catch(() => setLoading(false));
@@ -196,7 +215,6 @@ function App() {
   return (
     <div className={darkMode ? "bg-dark text-white min-vh-100" : "bg-light text-dark min-vh-100"} style={{ transition: 'all 0.3s' }}>
       <Router>
-        {/* Pass news to AppNavbar for Radio player */}
         <AppNavbar 
           language={language} 
           setLanguage={setLanguage} 

@@ -8,7 +8,7 @@ import {
 } from 'react-icons/fa';
 import RadioNewsModal from './RadioNewsModal';
 
-function AppNavbar({ language, setLanguage, darkMode, setDarkMode }) {
+function AppNavbar({ language, setLanguage, darkMode, setDarkMode, newsList = [] }) {
   const [showRadio, setShowRadio] = useState(false);
   const [unreadSavedCount, setUnreadSavedCount] = useState(0);
   const [unreadAdminCount, setUnreadAdminCount] = useState(0);
@@ -70,24 +70,8 @@ function AppNavbar({ language, setLanguage, darkMode, setDarkMode }) {
         className={`sticky-top shadow-sm px-3 py-2 ${darkMode ? 'bg-dark text-white' : 'bg-white text-dark'}`}
         style={{ borderBottom: darkMode ? '1px solid #333' : '1px solid #e5e7eb' }}
       >
-        <style>{`
-          .overflow-x-auto::-webkit-scrollbar {
-            display: none;
-          }
-        `}</style>
-
-        <div 
-          className="d-flex align-items-center gap-3 overflow-x-auto text-nowrap"
-          style={{ 
-            scrollbarWidth: 'none', 
-            msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch'
-          }}
-        >
-          <Link 
-            to="/" 
-            className="fw-bold fs-4 text-primary d-flex align-items-center gap-2 text-decoration-none me-2 flex-shrink-0"
-          >
+        <div className="d-flex align-items-center gap-3 overflow-x-auto text-nowrap" style={{ scrollbarWidth: 'none' }}>
+          <Link to="/" className="fw-bold fs-4 text-primary d-flex align-items-center gap-2 text-decoration-none me-2 flex-shrink-0">
             <FaNewspaper /> G-News
           </Link>
 
@@ -107,12 +91,7 @@ function AppNavbar({ language, setLanguage, darkMode, setDarkMode }) {
                 >
                   {cat.icon} {cat.name}
                   {cat.badge > 0 && (
-                    <Badge 
-                      bg="danger" 
-                      pill 
-                      className="ms-1 shadow-sm border border-light"
-                      style={{ fontSize: '10px', padding: '2px 6px' }}
-                    >
+                    <Badge bg="danger" pill className="ms-1 shadow-sm border border-light" style={{ fontSize: '10px', padding: '2px 6px' }}>
                       {cat.badge}
                     </Badge>
                   )}
@@ -130,7 +109,6 @@ function AppNavbar({ language, setLanguage, darkMode, setDarkMode }) {
               title="Change Language"
             >
               <FaGlobeAsia className="text-primary" size={18} />
-              
               <Form.Select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
@@ -163,11 +141,15 @@ function AppNavbar({ language, setLanguage, darkMode, setDarkMode }) {
               {darkMode ? <FaSun className="text-warning" /> : <FaMoon />}
             </Button>
           </div>
-
         </div>
       </nav>
 
-      <RadioNewsModal show={showRadio} onHide={() => setShowRadio(false)} />
+      <RadioNewsModal 
+        show={showRadio} 
+        onHide={() => setShowRadio(false)} 
+        newsList={newsList}
+        language={language}
+      />
     </>
   );
 }

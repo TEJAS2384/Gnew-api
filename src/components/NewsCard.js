@@ -6,7 +6,6 @@ function NewsCard({ article, language = 'en', onSaveToggle }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
-  const [voices, setVoices] = useState([]);
 
   useEffect(() => {
     const existing = JSON.parse(localStorage.getItem('savedNews') || '[]');
@@ -22,18 +21,6 @@ function NewsCard({ article, language = 'en', onSaveToggle }) {
 
   const credibilityScore = Math.floor(Math.random() * 7) + 92;
 
-  useEffect(() => {
-    const loadVoices = () => {
-      if ('speechSynthesis' in window) {
-        setVoices(window.speechSynthesis.getVoices());
-      }
-    };
-    loadVoices();
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-    }
-  }, []);
-
   const handleListen = () => {
     if (!('speechSynthesis' in window)) return;
     if (isSpeaking) {
@@ -45,17 +32,16 @@ function NewsCard({ article, language = 'en', onSaveToggle }) {
     const textToRead = `${article.title}. ${article.description || ''}`;
     const utterance = new SpeechSynthesisUtterance(textToRead);
 
-    const isGujarati = /[\u0A80-\u0AFF]/.test(textToRead) || language === 'gu';
-    const isHindi = /[\u0900-\u097F]/.test(textToRead) || language === 'hi';
+    if (language === 'gu') utterance.lang = 'gu-IN';
+    else if (language === 'hi') utterance.lang = 'hi-IN';
+    else utterance.lang = 'en-US';
 
-    let matchedVoice = voices.find(v => 
-      isGujarati ? (v.lang.includes('gu') || v.lang.includes('hi')) :
-      isHindi ? v.lang.includes('hi') : v.lang.includes('en')
-    );
-
+    const voices = window.speechSynthesis.getVoices();
+    const targetLang = language === 'gu' ? 'gu' : language === 'hi' ? 'hi' : 'en';
+    const matchedVoice = voices.find(v => v.lang.toLowerCase().includes(targetLang));
     if (matchedVoice) utterance.voice = matchedVoice;
-    utterance.rate = 0.9;
 
+    utterance.rate = 0.9;
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
 
@@ -105,7 +91,7 @@ function NewsCard({ article, language = 'en', onSaveToggle }) {
 
         <Card.Img 
           variant="top" 
-          src={article.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop"} 
+          src={article.image} 
           style={{ height: '180px', objectFit: 'cover' }}
           onError={(e) => {
             e.target.onerror = null;
