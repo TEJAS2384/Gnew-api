@@ -22,25 +22,27 @@ function NewsFeed({ newsList, setNewsList, language }) {
 
     let categoryForApi = currentCategory.toLowerCase();
     if (categoryForApi === 'tech') categoryForApi = 'technology';
-    if (categoryForApi === 'world') categoryForApi = 'general';
 
-    let gnewsUrl = "";
+    let rawGnewsUrl = "";
     if (searchTerm.trim().length > 0) {
-      gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(searchTerm.trim())}&lang=${language}&max=10&apikey=${GNEWS_API_KEY}`;
+      rawGnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(searchTerm.trim())}&lang=${language}&max=10&apikey=${GNEWS_API_KEY}`;
     } else {
-      gnewsUrl = `https://gnews.io/api/v4/top-headlines?category=${categoryForApi}&lang=${language}&max=10&apikey=${GNEWS_API_KEY}`;
+      rawGnewsUrl = `https://gnews.io/api/v4/top-headlines?category=${categoryForApi}&lang=${language}&max=10&apikey=${GNEWS_API_KEY}`;
     }
 
+    // 🚀 CORS Proxy added so Vercel gets the same live GNews API response as Localhost
+    const proxyGnewsUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rawGnewsUrl)}`;
+
     const timer = setTimeout(() => {
-      // 🌐 Primary Fetch: Try GNews API
-      fetch(gnewsUrl)
+      fetch(proxyGnewsUrl)
         .then((res) => {
-          if (!res.ok) throw new Error(`GNews status ${res.status}`);
+          if (!res.ok) throw new Error("API error");
           return res.json();
         })
         .then((data) => {
+          let apiArticles = [];
           if (data && data.articles && data.articles.length > 0) {
-            return data.articles.map((item, index) => ({
+            apiArticles = data.articles.map((item, index) => ({
               id: `api-${index + 1}`,
               title: item.title,
               description: item.description,
@@ -49,72 +51,48 @@ function NewsFeed({ newsList, setNewsList, language }) {
               image: item.image || item.urlToImage || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop",
               url: item.url
             }));
-          } else {
-            throw new Error("No articles returned from GNews");
           }
-        })
-        .catch(() => {
-          // 🚀 Bulletproof Auto-Fallback: Fetch Real Live News from Saurav.tech Open News API (Zero API key / No CORS limits)
-          const backupLiveUrl = `https://saurav.tech/NewsAPI/top-headlines/category/${categoryForApi}/in.json`;
-          return fetch(backupLiveUrl)
-            .then((res) => res.json())
-            .then((sauravData) => {
-              if (sauravData && sauravData.articles && sauravData.articles.length > 0) {
-                return sauravData.articles.slice(0, 10).map((item, index) => ({
-                  id: `live-${index + 1}`,
-                  title: item.title,
-                  description: item.description,
-                  category: currentCategory,
-                  author: item.source?.name || 'Live News Desk',
-                  image: item.urlToImage || item.image || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop",
-                  url: item.url
-                }));
-              }
-              return [];
-            });
-        })
-        .then((finalArticles) => {
-          // 🌟 Merge with User Approved News from LocalStorage at position #1
+
           const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
           const matchedApproved = localApproved.filter(item => 
             currentCategory === 'general' || item.category?.toLowerCase() === currentCategory.toLowerCase()
           );
 
-          setNewsList([...matchedApproved, ...(finalArticles || [])]);
+          setNewsList([...matchedApproved, ...apiArticles]);
           setLoading(false);
         })
-        .catch((err) => {
-          console.error("All live news sources encountered error:", err);
-          setLoading(false);
+        .catch(() => {
+          // Backup fallback if proxy is busy
+          const backupLiveUrl = `https://saurav.tech/NewsAPI/top-headlines/category/${categoryForApi}/in.json`;
+          fetch(backupLiveUrl)
+            .then((res) => res.json())
+            .then((sauravData) => {
+              const apiArticles = (sauravData.articles || []).slice(0, 10).map((item, index) => ({
+                id: `live-${index + 1}`,
+                title: item.title,
+                description: item.description,
+                category: currentCategory,
+                author: item.source?.name || 'Live News Desk',
+                image: item.urlToImage || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop",
+                url: item.url
+              }));
+
+              const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
+              setNewsList([...localApproved, ...apiArticles]);
+              setLoading(false);
+            })
+            .catch(() => setLoading(false));
         });
     }, 400);
 
     return () => clearTimeout(timer);
   }, [currentCategory, language, searchTerm, setNewsList]);
 
-  // Handle live approved news events
-  useEffect(() => {
-    const handleApprovedChange = () => {
-      const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
-      const matchedApproved = localApproved.filter(item => 
-        currentCategory === 'general' || item.category?.toLowerCase() === currentCategory.toLowerCase()
-      );
-      setNewsList(prev => {
-        const nonApproved = prev.filter(item => !item.id?.toString().startsWith('user-') && typeof item.id !== 'number');
-        return [...matchedApproved, ...nonApproved];
-      });
-    };
-
-    window.addEventListener('approvedNewsChanged', handleApprovedChange);
-    return () => window.removeEventListener('approvedNewsChanged', handleApprovedChange);
-  }, [currentCategory, setNewsList]);
-
   const heroArticle = newsList.length > 0 ? newsList[0] : null;
   const gridArticles = newsList.length > 1 ? newsList.slice(1) : [];
 
   return (
     <div className="container my-4">
-      {/* 🔍 Search Bar */}
       <div className="mb-4" style={{ maxWidth: '600px', margin: '0 auto' }}>
         <input 
           type="text" 
@@ -136,7 +114,6 @@ function NewsFeed({ newsList, setNewsList, language }) {
         </div>
       ) : (
         <>
-          {/* 🌟 Hero Breaking Banner */}
           {heroArticle && (
             <div className="card shadow-lg border-0 rounded-4 overflow-hidden mb-5">
               <div className="row g-0 align-items-center">
@@ -160,7 +137,6 @@ function NewsFeed({ newsList, setNewsList, language }) {
             </div>
           )}
 
-          {/* 📰 News Cards Grid */}
           <h3 className="fw-bold mb-4 border-start border-4 border-primary ps-3">
             {searchTerm.trim() ? `Search Results for "${searchTerm}"` : `Latest ${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} News`}
           </h3>
@@ -178,7 +154,6 @@ function NewsFeed({ newsList, setNewsList, language }) {
   );
 }
 
-// 🔖 Saved Bookmarks View Component
 function SavedNews({ language }) {
   const [savedItems, setSavedItems] = useState([]);
 
@@ -198,7 +173,7 @@ function SavedNews({ language }) {
       <h3 className="fw-bold mb-4">🔖 Saved Articles ({savedItems.length})</h3>
       {savedItems.length === 0 ? (
         <div className="text-center py-5 text-muted card shadow-sm border-0 p-5">
-          <h5>No bookmarked articles yet. Click bookmark icon on any news card to save!</h5>
+          <h5>No bookmarked articles yet.</h5>
         </div>
       ) : (
         <div className="row g-4">
@@ -221,11 +196,13 @@ function App() {
   return (
     <div className={darkMode ? "bg-dark text-white min-vh-100" : "bg-light text-dark min-vh-100"} style={{ transition: 'all 0.3s' }}>
       <Router>
+        {/* Pass news to AppNavbar for Radio player */}
         <AppNavbar 
           language={language} 
           setLanguage={setLanguage} 
           darkMode={darkMode} 
           setDarkMode={setDarkMode} 
+          newsList={news}
         />
 
         <Routes>
