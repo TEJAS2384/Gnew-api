@@ -8,7 +8,7 @@ import SubmitNews from './components/SubmitNews';
 import AdminPanel from './components/AdminPanel';
 import AskNewsChat from './components/AskNewsChat';
 
-const GNEWS_API_KEY = process.env.REACT_APP_GNEWS_API_KEY || "b890dfdbc88d6283fbd54075e88eccaa";
+const GNEWS_API_KEY = "b890dfdbc88d6283fbd54075e88eccaa";
 
 // 🛡️ 10 Backup News Articles (API limit પૂરી થાય તો પણ સાઈટ મસ્ત દેખાશે)
 const fallbackNews = [
