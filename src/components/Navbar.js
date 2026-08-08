@@ -227,98 +227,108 @@ function AppNavbar({ language, setLanguage, darkMode, setDarkMode, newsList = []
         className={`sticky-top shadow-sm px-3 py-2 ${darkMode ? 'bg-dark text-white' : 'bg-white text-dark'}`}
         style={{ borderBottom: darkMode ? '1px solid #333' : '1px solid #e5e7eb' }}
       >
-        <div className="d-flex align-items-center gap-3 overflow-x-auto text-nowrap" style={{ scrollbarWidth: 'none' }}>
-          {/* 1. LOGO */}
-          <Link to="/" className="fw-bold fs-4 text-primary d-flex align-items-center gap-2 text-decoration-none me-2 flex-shrink-0">
+        <div className="d-flex align-items-center">
+          
+          {/* 🟢 FIXED LOGO & BRAND NAME */}
+          <Link 
+            to="/" 
+            className="fw-bold fs-4 text-primary d-flex align-items-center gap-2 text-decoration-none me-3 flex-shrink-0"
+            style={{ zIndex: 10 }}
+          >
             <FaNewspaper /> T-News
           </Link>
 
-          {/* 2. CATEGORIES (World, Local, Business, Tech...) */}
-          <div className="d-flex align-items-center gap-2 flex-shrink-0 fw-semibold">
-            {categories.map((cat, idx) => {
-              const isActive = location.pathname === cat.path;
-              return (
-                <Link
-                  key={idx}
-                  to={cat.path}
-                  className={`btn btn-sm d-flex align-items-center gap-1 border-0 rounded-pill px-3 py-1 position-relative ${
-                    isActive 
-                      ? (darkMode ? 'btn-secondary text-white' : 'btn-light text-primary fw-bold') 
-                      : (darkMode ? 'text-light' : 'text-dark')
-                  }`}
-                  style={{ fontSize: '13.5px' }}
-                  onClick={() => {
-                    if (cat.path === '/category/local' && isActive) {
-                      setShowLocationModal(true);
-                    }
-                  }}
-                >
-                  {cat.icon} {cat.name}
-                  {cat.badge > 0 && (
-                    <Badge bg="danger" pill className="ms-1 shadow-sm border border-light" style={{ fontSize: '10px', padding: '2px 6px' }}>
-                      {cat.badge}
-                    </Badge>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* 3. RIGHT UTILITY TOOLBAR (Weather Widget, App, Language, Radio, DarkMode) */}
-          <div className="d-flex align-items-center gap-2 ms-auto flex-shrink-0 ps-2">
-            <WeatherWidget city={city} />
-
-            {isInstallable && (
-              <Button 
-                variant="success" 
-                size="sm" 
-                className="fw-bold d-flex align-items-center gap-1 rounded-pill px-3 py-1 border-0 shadow-sm"
-                style={{ fontSize: '13px' }}
-                onClick={handleInstallApp}
-              >
-                <FaDownload size={11} /> App
-              </Button>
-            )}
-
-            <div 
-              className={`position-relative rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm ${
-                darkMode ? 'bg-secondary bg-opacity-25 text-white' : 'bg-light text-dark'
-              }`}
-              style={{ width: '36px', height: '36px', cursor: 'pointer' }}
-              title="Change Language"
-            >
-              <FaGlobeAsia className="text-primary" size={18} />
-              <Form.Select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="position-absolute top-0 start-0 w-100 h-100 opacity-0"
-                style={{ cursor: 'pointer' }}
-              >
-                <option value="en">🇬🇧 English</option>
-                <option value="hi">🇮🇳 हिन्दी</option>
-                <option value="gu">🇮🇳 ગુજરાતી</option>
-              </Form.Select>
+          {/* 🟢 SCROLLABLE CONTAINER (Categories + Utilities) */}
+          <div className="d-flex align-items-center gap-3 overflow-x-auto text-nowrap flex-grow-1" style={{ scrollbarWidth: 'none' }}>
+            
+            {/* Category Navigation Links */}
+            <div className="d-flex align-items-center gap-2 flex-shrink-0 fw-semibold">
+              {categories.map((cat, idx) => {
+                const isActive = location.pathname === cat.path;
+                return (
+                  <Link
+                    key={idx}
+                    to={cat.path}
+                    className={`btn btn-sm d-flex align-items-center gap-1 border-0 rounded-pill px-3 py-1 position-relative ${
+                      isActive 
+                        ? (darkMode ? 'btn-secondary text-white' : 'btn-light text-primary fw-bold') 
+                        : (darkMode ? 'text-light' : 'text-dark')
+                    }`}
+                    style={{ fontSize: '13.5px' }}
+                    onClick={() => {
+                      if (cat.path === '/category/local' && isActive) {
+                        setShowLocationModal(true);
+                      }
+                    }}
+                  >
+                    {cat.icon} {cat.name}
+                    {cat.badge > 0 && (
+                      <Badge bg="danger" pill className="ms-1 shadow-sm border border-light" style={{ fontSize: '10px', padding: '2px 6px' }}>
+                        {cat.badge}
+                      </Badge>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
 
-            <Button 
-              variant="danger" 
-              size="sm" 
-              className="fw-bold d-flex align-items-center gap-2 rounded-pill px-3 py-1 border-0 shadow-sm"
-              style={{ fontSize: '13px', background: 'linear-gradient(135deg, #dc3545 0%, #b02a37 100%)' }}
-              onClick={() => setShowRadio(true)}
-            >
-              <FaBroadcastTower /> Radio
-            </Button>
+            {/* Right Utilities (Weather, App, Language, Radio, DarkMode) */}
+            <div className="d-flex align-items-center gap-2 ms-auto flex-shrink-0 ps-2">
+              <WeatherWidget city={city} />
 
-            <Button 
-              variant={darkMode ? "light" : "dark"} 
-              size="sm" 
-              className="rounded-circle p-2 d-flex align-items-center justify-content-center border-0 shadow-sm"
-              style={{ width: '36px', height: '36px' }}
-              onClick={() => setDarkMode(!darkMode)}
-            >
-              {darkMode ? <FaSun className="text-warning" /> : <FaMoon />}
-            </Button>
+              {isInstallable && (
+                <Button 
+                  variant="success" 
+                  size="sm" 
+                  className="fw-bold d-flex align-items-center gap-1 rounded-pill px-3 py-1 border-0 shadow-sm"
+                  style={{ fontSize: '13px' }}
+                  onClick={handleInstallApp}
+                >
+                  <FaDownload size={11} /> App
+                </Button>
+              )}
+
+              <div 
+                className={`position-relative rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm ${
+                  darkMode ? 'bg-secondary bg-opacity-25 text-white' : 'bg-light text-dark'
+                }`}
+                style={{ width: '36px', height: '36px', cursor: 'pointer' }}
+                title="Change Language"
+              >
+                <FaGlobeAsia className="text-primary" size={18} />
+                <Form.Select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="position-absolute top-0 start-0 w-100 h-100 opacity-0"
+                  style={{ cursor: 'pointer' }}
+                >
+                  <option value="en">🇬🇧 English</option>
+                  <option value="hi">🇮🇳 हिन्दी</option>
+                  <option value="gu">🇮🇳 ગુજરાતી</option>
+                </Form.Select>
+              </div>
+
+              <Button 
+                variant="danger" 
+                size="sm" 
+                className="fw-bold d-flex align-items-center gap-2 rounded-pill px-3 py-1 border-0 shadow-sm"
+                style={{ fontSize: '13px', background: 'linear-gradient(135deg, #dc3545 0%, #b02a37 100%)' }}
+                onClick={() => setShowRadio(true)}
+              >
+                <FaBroadcastTower /> Radio
+              </Button>
+
+              <Button 
+                variant={darkMode ? "light" : "dark"} 
+                size="sm" 
+                className="rounded-circle p-2 d-flex align-items-center justify-content-center border-0 shadow-sm"
+                style={{ width: '36px', height: '36px' }}
+                onClick={() => setDarkMode(!darkMode)}
+              >
+                {darkMode ? <FaSun className="text-warning" /> : <FaMoon />}
+              </Button>
+            </div>
+
           </div>
         </div>
       </nav>

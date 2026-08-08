@@ -112,7 +112,7 @@ function AdminPanel() {
                 </Form.Label>
                 <Form.Control 
                   type="password" 
-                  placeholder="Enter admin password (admin123)..." 
+                  placeholder="Enter admin password.." 
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
                   required

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useParams } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { Analytics } from "@vercel/analytics/react"
 
 import AppNavbar from './components/Navbar';
 import Ticker from './components/Ticker'; 
+import BreakingNewsBanner from './components/BreakingNewsBanner'; // 🟢 Import Banner
 import NewsCard from './components/NewsCard';
 import SubmitNews from './components/SubmitNews';
 import AdminPanel from './components/AdminPanel';
@@ -317,8 +319,11 @@ function App() {
           newsList={news}
         />
 
-        {/* 🚀 Sleek Live Ticker Bar right below Navbar */}
+        {/* 🚀 Sleek Live Ticker Bar */}
         <Ticker />
+
+        {/* 🚨 Mobile & Desktop Breaking News Strip with Phone Notification Support */}
+        <BreakingNewsBanner newsList={news} />
 
         <Routes>
           <Route path="/" element={<NewsFeed newsList={news} setNewsList={setNews} language={language} />} />
@@ -334,7 +339,6 @@ function App() {
           <p className="mb-0">© 2026 T-News Platform. All rights reserved.</p>
           <p className="fw-bold text-primary mb-0">Developed by Tejas😎</p>
         </footer>
-       
       </Router>
     </div>
   );
