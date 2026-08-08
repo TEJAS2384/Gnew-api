@@ -2,25 +2,39 @@ import React, { useState, useEffect } from 'react';
 import './Ticker.css';
 
 const Ticker = () => {
+  const [userCity, setUserCity] = useState(localStorage.getItem('userCity') || 'Ahmedabad');
   const [stockData, setStockData] = useState([
-    { symbol: "🌤️ WEATHER (AHMEDABAD)", price: "32°C", change: "LIVE", isUp: true },
+    { symbol: `🌤️ WEATHER (${(localStorage.getItem('userCity') || 'AHMEDABAD').toUpperCase()})`, price: "32°C", change: "LIVE", isUp: true },
     { symbol: "SENSEX", price: "80,120.50", change: "+0.8%", isUp: true },
     { symbol: "NIFTY 50", price: "24,530.00", change: "+0.6%", isUp: true },
     { symbol: "RELIANCE", price: "3,150.45", change: "-0.1%", isUp: false },
     { symbol: "TCS", price: "4,225.10", change: "+1.2%", isUp: true },
-    { symbol: "BITCOIN", price: "$64,200", change: "+2.1%", isUp: true },
-    { symbol: "ETHEREUM", price: "$3,450", change: "+1.5%", isUp: true }
+    { symbol: "BITCOIN (LIVE)", price: "$64,200", change: "+2.1%", isUp: true },
+    { symbol: "ETHEREUM (LIVE)", price: "$3,450", change: "+1.5%", isUp: true }
   ]);
+
+  useEffect(() => {
+    const handleCityChange = () => {
+      setUserCity(localStorage.getItem('userCity') || 'Ahmedabad');
+    };
+    window.addEventListener('cityChanged', handleCityChange);
+    return () => window.removeEventListener('cityChanged', handleCityChange);
+  }, []);
 
   useEffect(() => {
     const fetchMarketData = async () => {
       try {
         let currentTemp = "32°C";
         try {
-          const weatherRes = await fetch('https://api.open-meteo.com/v1/forecast?latitude=23.0225&longitude=72.5714&current_weather=true');
-          const weatherLive = await weatherRes.json();
-          if (weatherLive?.current_weather?.temperature) {
-            currentTemp = `${weatherLive.current_weather.temperature}°C`;
+          const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(userCity)}&count=1&language=en&format=json`);
+          const geoData = await geoRes.json();
+          if (geoData.results && geoData.results.length > 0) {
+            const { latitude, longitude } = geoData.results[0];
+            const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+            const weatherLive = await weatherRes.json();
+            if (weatherLive?.current_weather?.temperature !== undefined) {
+              currentTemp = `${Math.round(weatherLive.current_weather.temperature)}°C`;
+            }
           }
         } catch (e) {
           console.log("Weather fetch fallback");
@@ -51,7 +65,7 @@ const Ticker = () => {
         }
 
         setStockData([
-          { symbol: "🌤️ WEATHER (AHMEDABAD)", price: currentTemp, change: "LIVE", isUp: true },
+          { symbol: `🌤️ WEATHER (${userCity.toUpperCase()})`, price: currentTemp, change: "LIVE", isUp: true },
           { symbol: "SENSEX", price: "80,120.50", change: "+0.8%", isUp: true },
           { symbol: "NIFTY 50", price: "24,530.00", change: "+0.6%", isUp: true },
           { symbol: "RELIANCE", price: "3,150.45", change: "-0.1%", isUp: false },
@@ -67,7 +81,7 @@ const Ticker = () => {
     fetchMarketData();
     const interval = setInterval(fetchMarketData, 120000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userCity]);
 
   return (
     <div className="ticker-container">

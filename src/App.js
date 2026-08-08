@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useParams } from 'react-router-
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import AppNavbar from './components/Navbar';
+import Ticker from './components/Ticker'; 
 import NewsCard from './components/NewsCard';
 import SubmitNews from './components/SubmitNews';
 import AdminPanel from './components/AdminPanel';
@@ -10,60 +11,81 @@ import AskNewsChat from './components/AskNewsChat';
 
 const GNEWS_API_KEY = "700109c3b2c10f2cd490f40d7c002bab";
 
-// 🖼️ Category-Specific Dynamic Image Engine
-const getUniqueImage = (item, category, index) => {
-  if (item.image && item.image.startsWith('http')) return item.image;
-  if (item.urlToImage && item.urlToImage.startsWith('http')) return item.urlToImage;
-  
-  const categoryImages = {
-    tech: [
-      "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=600&auto=format&fit=crop"
-    ],
-    business: [
-      "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600&auto=format&fit=crop"
-    ],
-    science: [
-      "https://images.unsplash.com/photo-1509391365360-2e959784a276?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1507668077129-56e32842fceb?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=600&auto=format&fit=crop"
-    ],
-    sports: [
-      "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1517649763962-0c623266010b?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop"
-    ],
-    health: [
-      "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1505576399279-565b52d4ac71?q=80&w=600&auto=format&fit=crop"
-    ],
-    world: [
-      "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop"
-    ],
-    general: [
-      "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=600&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?q=80&w=600&auto=format&fit=crop"
-    ]
-  };
+// 🌐 Dynamic UI Translations
+const UI_TEXT = {
+  en: {
+    breaking: "🔥 Breaking News",
+    readFull: "Read Full Article",
+    latest: "Latest",
+    news: "News",
+    searchResults: 'Search Results for',
+    fetching: "Fetching Live News...",
+    noNews: "🔍 No news articles found right now.",
+    savedArticles: "🔖 Saved Articles",
+    noSaved: "No bookmarked articles yet."
+  },
+  hi: {
+    breaking: "🔥 ब्रेकिंग न्यूज़",
+    readFull: "पूरा लेख पढ़ें",
+    latest: "ताज़ा",
+    news: "समाचार",
+    searchResults: "के लिए खोज परिणाम",
+    fetching: "लाइव समाचार लोड हो रहे हैं...",
+    noNews: "🔍 अभी कोई समाचार नहीं मिले।",
+    savedArticles: "🔖 सहेजे गए लेख",
+    noSaved: "अभी तक कोई बुकमार्क नहीं है।"
+  },
+  gu: {
+    breaking: "🔥 બ્રેકિંગ ન્યૂઝ",
+    readFull: "સંપૂર્ણ સમાચાર વાંચો",
+    latest: "તાજા",
+    news: "સમાચાર",
+    searchResults: "માટે શોધ પરિણામો",
+    fetching: "લાઈવ સમાચાર આવી રહ્યા છે...",
+    noNews: "🔍 હાલમાં કોઈ સમાચાર મળ્યા નથી.",
+    savedArticles: "સાચવેલા સમાચાર",
+    noSaved: "હજુ સુધી કોઈ બુકમાર્ક સાચવેલ નથી."
+  }
+};
 
-  const catKey = (category || 'general').toLowerCase();
-  const pool = categoryImages[catKey] || categoryImages.general;
-  return pool[index % pool.length];
+// 🖼️ Guaranteed 100% Unique Dynamic Image Engine
+const getUniqueImage = (item, category, index) => {
+  // 1. Check if original API image exists and is valid
+  if (item.image && typeof item.image === 'string' && item.image.startsWith('http') && !item.image.includes('placeholder')) return item.image;
+  if (item.urlToImage && typeof item.urlToImage === 'string' && item.urlToImage.startsWith('http') && !item.urlToImage.includes('placeholder')) return item.urlToImage;
+  if (item.thumbnail && typeof item.thumbnail === 'string' && item.thumbnail.startsWith('http')) return item.thumbnail;
+  if (item.enclosure?.link && typeof item.enclosure.link === 'string' && item.enclosure.link.startsWith('http')) return item.enclosure.link;
+
+  // 2. Extract embedded image from HTML description if available
+  if (item.description && typeof item.description === 'string') {
+    const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (imgMatch && imgMatch[1] && imgMatch[1].startsWith('http')) {
+      return imgMatch[1];
+    }
+  }
+
+  // 3. Dynamic Seed Fallback: Generates a 100% distinct photo per title
+  const titleSeed = (item.title || `news-${index}`).replace(/[^a-zA-Z0-9]/g, '').substring(0, 25);
+  const seedKey = `${category || 'world'}-${titleSeed}-${index}`;
+  return `https://picsum.photos/seed/${encodeURIComponent(seedKey)}/600/350`;
 };
 
 function NewsFeed({ newsList, setNewsList, language }) {
   const { categoryName } = useParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userCity, setUserCity] = useState(localStorage.getItem('userCity') || 'Ahmedabad');
 
-  const currentCategory = categoryName || 'general';
+  const currentCategory = categoryName || 'world';
+  const txt = UI_TEXT[language] || UI_TEXT.en;
+
+  useEffect(() => {
+    const handleCityChange = () => {
+      setUserCity(localStorage.getItem('userCity') || 'Ahmedabad');
+    };
+    window.addEventListener('cityChanged', handleCityChange);
+    return () => window.removeEventListener('cityChanged', handleCityChange);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -71,14 +93,18 @@ function NewsFeed({ newsList, setNewsList, language }) {
     let categoryForApi = currentCategory.toLowerCase();
     if (categoryForApi === 'tech') categoryForApi = 'technology';
 
+    let queryParam = searchTerm.trim();
+    if (!queryParam && categoryForApi === 'local') {
+      queryParam = userCity;
+    }
+
     let rawGnewsUrl = "";
-    if (searchTerm.trim().length > 0) {
-      rawGnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(searchTerm.trim())}&lang=${language}&max=12&apikey=${GNEWS_API_KEY}`;
+    if (queryParam.length > 0) {
+      rawGnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(queryParam)}&lang=${language}&max=12&apikey=${GNEWS_API_KEY}`;
     } else {
       rawGnewsUrl = `https://gnews.io/api/v4/top-headlines?category=${categoryForApi}&lang=${language}&max=12&apikey=${GNEWS_API_KEY}`;
     }
 
-    // 🚀 CORS Proxy wrapper to prevent Vercel domain blocks
     const proxyGnewsUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rawGnewsUrl)}`;
 
     const timer = setTimeout(() => {
@@ -94,7 +120,7 @@ function NewsFeed({ newsList, setNewsList, language }) {
               title: item.title,
               description: item.description || 'Latest news update.',
               category: currentCategory,
-              author: item.source?.name || 'GNews Desk',
+              author: item.source?.name || 'TNews Desk',
               image: getUniqueImage(item, currentCategory, index),
               url: item.url
             }));
@@ -103,7 +129,7 @@ function NewsFeed({ newsList, setNewsList, language }) {
           }
         })
         .catch(() => {
-          // 🚀 Category-Specific Fallback Feed
+          // 🚀 Dynamic RSS Fallback
           let rssTopic = "";
           if (categoryForApi === 'technology') rssTopic = "headlines/section/topic/TECHNOLOGY";
           else if (categoryForApi === 'business') rssTopic = "headlines/section/topic/BUSINESS";
@@ -112,9 +138,24 @@ function NewsFeed({ newsList, setNewsList, language }) {
           else if (categoryForApi === 'health') rssTopic = "headlines/section/topic/HEALTH";
           else if (categoryForApi === 'world') rssTopic = "headlines/section/topic/WORLD";
 
-          const rssUrl = rssTopic 
-            ? `https://news.google.com/rss/${rssTopic}?hl=en-IN&gl=IN&ceid=IN:en`
-            : `https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en`;
+          let rssLang = "en-IN";
+          let ceid = "IN:en";
+          if (language === 'hi') {
+            rssLang = "hi";
+            ceid = "IN:hi";
+          } else if (language === 'gu') {
+            rssLang = "gu";
+            ceid = "IN:gu";
+          }
+
+          let rssUrl = "";
+          if (categoryForApi === 'local') {
+            rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(userCity)}&hl=${rssLang}&gl=IN&ceid=${ceid}`;
+          } else if (rssTopic) {
+            rssUrl = `https://news.google.com/rss/${rssTopic}?hl=${rssLang}&gl=IN&ceid=${ceid}`;
+          } else {
+            rssUrl = `https://news.google.com/rss?hl=${rssLang}&gl=IN&ceid=${ceid}`;
+          }
 
           const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
 
@@ -138,7 +179,7 @@ function NewsFeed({ newsList, setNewsList, language }) {
         .then((finalArticles) => {
           const localApproved = JSON.parse(localStorage.getItem('approvedNews') || '[]');
           const matchedApproved = localApproved.filter(item => 
-            currentCategory === 'general' || item.category?.toLowerCase() === currentCategory.toLowerCase()
+            currentCategory === 'world' || item.category?.toLowerCase() === currentCategory.toLowerCase()
           );
 
           setNewsList([...matchedApproved, ...(finalArticles || [])]);
@@ -151,10 +192,16 @@ function NewsFeed({ newsList, setNewsList, language }) {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [currentCategory, language, searchTerm, setNewsList]);
+  }, [currentCategory, language, searchTerm, userCity, setNewsList]);
 
   const heroArticle = newsList.length > 0 ? newsList[0] : null;
   const gridArticles = newsList.length > 1 ? newsList.slice(1) : [];
+
+  const getHeadingTitle = () => {
+    if (searchTerm.trim()) return `${txt.searchResults} "${searchTerm}"`;
+    if (currentCategory === 'local') return `${txt.latest} ${userCity} ${txt.news}`;
+    return `${txt.latest} ${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} ${txt.news}`;
+  };
 
   return (
     <div className="container my-4">
@@ -171,11 +218,11 @@ function NewsFeed({ newsList, setNewsList, language }) {
       {loading ? (
         <div className="text-center py-5">
           <div className="spinner-border text-primary" role="status"></div>
-          <p className="mt-2 text-muted fw-bold">Fetching Live News...</p>
+          <p className="mt-2 text-muted fw-bold">{txt.fetching}</p>
         </div>
       ) : newsList.length === 0 ? (
         <div className="text-center py-5 text-muted card shadow-sm border-0 p-5 my-4">
-          <h5>🔍 No news articles found right now.</h5>
+          <h5>{txt.noNews}</h5>
         </div>
       ) : (
         <>
@@ -191,11 +238,11 @@ function NewsFeed({ newsList, setNewsList, language }) {
                   />
                 </div>
                 <div className="col-md-5 p-4">
-                  <span className="badge bg-danger mb-2 px-3 py-2 uppercase fw-bold">🔥 Breaking News</span>
+                  <span className="badge bg-danger mb-2 px-3 py-2 uppercase fw-bold">{txt.breaking}</span>
                   <h3 className="fw-bold mb-3">{heroArticle.title}</h3>
                   <p className="text-secondary mb-4">{heroArticle.description}</p>
                   <a href={heroArticle.url || "#"} target="_blank" rel="noreferrer" className="btn btn-primary fw-bold px-4 py-2 rounded-pill">
-                    Read Full Article
+                    {txt.readFull}
                   </a>
                 </div>
               </div>
@@ -203,7 +250,7 @@ function NewsFeed({ newsList, setNewsList, language }) {
           )}
 
           <h3 className="fw-bold mb-4 border-start border-4 border-primary ps-3">
-            {searchTerm.trim() ? `Search Results for "${searchTerm}"` : `Latest ${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} News`}
+            {getHeadingTitle()}
           </h3>
 
           <div className="row g-4">
@@ -221,6 +268,7 @@ function NewsFeed({ newsList, setNewsList, language }) {
 
 function SavedNews({ language }) {
   const [savedItems, setSavedItems] = useState([]);
+  const txt = UI_TEXT[language] || UI_TEXT.en;
 
   const refreshSaved = () => {
     const saved = JSON.parse(localStorage.getItem('savedNews') || '[]');
@@ -235,10 +283,10 @@ function SavedNews({ language }) {
 
   return (
     <div className="container my-5">
-      <h3 className="fw-bold mb-4">🔖 Saved Articles ({savedItems.length})</h3>
+      <h3 className="fw-bold mb-4">{txt.savedArticles} ({savedItems.length})</h3>
       {savedItems.length === 0 ? (
         <div className="text-center py-5 text-muted card shadow-sm border-0 p-5">
-          <h5>No bookmarked articles yet.</h5>
+          <h5>{txt.noSaved}</h5>
         </div>
       ) : (
         <div className="row g-4">
@@ -269,6 +317,9 @@ function App() {
           newsList={news}
         />
 
+        {/* 🚀 Sleek Live Ticker Bar right below Navbar */}
+        <Ticker />
+
         <Routes>
           <Route path="/" element={<NewsFeed newsList={news} setNewsList={setNews} language={language} />} />
           <Route path="/category/:categoryName" element={<NewsFeed newsList={news} setNewsList={setNews} language={language} />} />
@@ -280,9 +331,10 @@ function App() {
         <AskNewsChat newsList={news} />
 
         <footer className="text-center py-4 border-top mt-5 text-muted small">
-          <p className="mb-0">© 2026 G-News Platform. All rights reserved.</p>
+          <p className="mb-0">© 2026 T-News Platform. All rights reserved.</p>
           <p className="fw-bold text-primary mb-0">Developed by Tejas😎</p>
         </footer>
+       
       </Router>
     </div>
   );
